@@ -1,0 +1,41 @@
+400480:	55                   	push   %rbp
+  400481:	48 89 e5             	mov    %rsp,%rbp
+  400484:	89 7d fc             	mov    %edi,-0x4(%rbp)
+
+label_1:
+  400487:	b8 07 00 00 00       	mov    $0x7,%eax
+  40048c:	6b 4d fc 05          	imul   $0x5,-0x4(%rbp),%ecx
+  400490:	89 4d fc             	mov    %ecx,-0x4(%rbp)
+  400493:	8b 4d fc             	mov    -0x4(%rbp),%ecx
+  400496:	89 45 f8             	mov    %eax,-0x8(%rbp)
+  400499:	89 c8                	mov    %ecx,%eax
+  40049b:	99                   	cltd   
+  40049c:	8b 4d f8             	mov    -0x8(%rbp),%ecx
+  40049f:	f7 f9                	idiv   %ecx
+  4004a1:	83 fa 00             	cmp    $0x0,%edx
+
+  4004a4:	0f 85 05 00 00 00    	jne    label_2 <fun+0x2f>
+
+  4004aa:	e9 20 00 00 00       	jmpq   label_end <fun+0x4f>
+
+label_2:
+  4004af:	8b 45 fc             	mov    -0x4(%rbp),%eax
+  4004b2:	83 c0 ff             	add    $0xffffffff,%eax
+  4004b5:	89 45 fc             	mov    %eax,-0x4(%rbp)
+  4004b8:	81 7d fc e8 03 00 00 	cmpl   $0x3e8,-0x4(%rbp)
+
+  4004bf:	0f 8d 05 00 00 00    	jge    label_3 <fun+0x4a>
+
+  4004c5:	e9 bd ff ff ff       	jmpq   label_1 <fun+0x7>
+
+label3:
+  4004ca:	e9 00 00 00 00       	jmpq   label_end <fun+0x4f>
+
+label_end:
+  4004cf:	8b 45 fc             	mov    -0x4(%rbp),%eax
+  4004d2:	5d                   	pop    %rbp
+
+  4004d3:	c3                   	retq   
+  4004d4:	66 66 66 2e 0f 1f 84 	data16 data16 nopw %cs:0x0(%rax,%rax,1)
+  4004db:	00 00 00 00 00 
+
