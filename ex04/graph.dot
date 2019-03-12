@@ -1,0 +1,1 @@
+digraph G{1[shape=rectangle label="box"]2[shape=rectangle label="another\lbox\l"]1->2[label="arrow"]}

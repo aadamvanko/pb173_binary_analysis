@@ -1,0 +1,12 @@
+digraph G {
+	1 [ shape=rectangle label="int a = 0\lint b = 1\lint c = 0\l" ]
+	2 [ shape=rectangle label="c = a + b\la = b\lb = c\ln--\l" ]
+	3 [ shape=rectangle label="if (n > 0) goto\l" ]
+	4 [ shape=rectangle label="return a" ]
+	5 [ shape=rectangle label="ret" ]
+	1 -> 2
+	2 -> 3
+	3 -> 2
+	3 -> 4
+	4 -> 5
+}
