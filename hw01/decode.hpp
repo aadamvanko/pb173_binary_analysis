@@ -77,15 +77,22 @@ namespace InstructionDecoding {
             return static_cast<int64_t>(parseImmediate(immediateStart, 8));
         }
 
-        string parseTwo64bitRegistersFromModRM(uint8_t modRM) {
-            unordered_map<uint8_t, string> combinations {
-                    {0b11110000, "%rax, %rax"}
+        ModRM parseModRM(uint8_t byte) {
+            return { byte & 0xc0, byte & 0x38, byte & 0x07 };
+        }
+
+        string parseTwo64bitRegistersFromModRM(uint8_t byte) {
+            unordered_map<uint8_t, string> registers {
+                    {0b000, "%rax"},
+                    {0b011, "%rbx"},
+                    {0b001, "%rcx"},
+                    {0b010, "%rdx"}
             };
 
-            if (combinations.find(modRM) != combinations.end()) {
-                return combinations[modRM];
-            }
-            return "uknown modRM byte";
+            ModRM modRM = parseModRM(byte);
+            string leftOperand = registers[modRM.reg];
+            string rightOperand = registers[modRM.rm];
+            return leftOperand + ", " + rightOperand;
         }
 
         string decodeBytes(vector <uint8_t> bytes) {
@@ -122,7 +129,7 @@ namespace InstructionDecoding {
 
                 // imul
                 case 0x0F: {
-                    if (*(opcode + 1) != 0xAF) {
+                    if (*(opcode + 1) != 0xAF || !rex.W) {
                         decoded << "unknown instruction";
                         break;
                     }
