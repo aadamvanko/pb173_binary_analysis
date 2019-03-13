@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include <cassert>
+#include <unordered_map>
 
 namespace InstructionDecoding {
 
@@ -13,6 +14,21 @@ namespace InstructionDecoding {
     using std::cout;
     using std::endl;
     using std::vector;
+    using std::hex;
+    using std::unordered_map;
+
+    struct REX {
+        bool W;
+        bool R;
+        bool X;
+        bool B;
+    };
+
+    struct ModRM {
+        uint8_t mod;
+        uint8_t reg;
+        uint8_t rm;
+    };
 
     class Decoder {
     private:
@@ -28,9 +44,105 @@ namespace InstructionDecoding {
             return tokens;
         }
 
+        REX parseRex(uint8_t byte) {
+            return { .W = static_cast<bool>(byte & 0x8),
+                     .R = static_cast<bool>(byte & 0x4),
+                     .X = static_cast<bool>(byte & 0x2),
+                     .B = static_cast<bool>(byte & 0x1) };
+        }
+
+        int64_t parseImmediate(uint8_t *startByte, int bytesCount) {
+            uint64_t value = 0;
+            for (int i = 0; i < bytesCount; i++, startByte++) {
+                value <<= 8;
+                value |= static_cast<uint64_t>(*startByte);
+            }
+            return static_cast<int64_t>(value);
+        }
+
     public:
+        int8_t parseByteImmediate(uint8_t *immediateStart) {
+            return static_cast<int8_t>(parseImmediate(immediateStart, 1));
+        }
+
+        int16_t parse2ByteImmediate(uint8_t *immediateStart) {
+            return static_cast<int16_t>(parseImmediate(immediateStart, 2));
+        }
+
+        int32_t parse4ByteImmediate(uint8_t *immediateStart) {
+            return static_cast<int32_t>(parseImmediate(immediateStart, 4));
+        }
+
+        int64_t parse8ByteImmediate(uint8_t *immediateStart) {
+            return static_cast<int64_t>(parseImmediate(immediateStart, 8));
+        }
+
+        string parseTwo64bitRegistersFromModRM(uint8_t modRM) {
+            unordered_map<uint8_t, string> combinations {
+                    {0b11110000, "%rax, %rax"}
+            };
+
+            if (combinations.find(modRM) != combinations.end()) {
+                return combinations[modRM];
+            }
+            return "uknown modRM byte";
+        }
+
+        string decodeBytes(vector <uint8_t> bytes) {
+            if (bytes.empty()) {
+                return "unknown instruction";
+            }
+
+            REX rex{};
+            uint8_t* opcode = &bytes[0];
+
+            if (bytes[0] >= 0x40 && bytes[0] <= 0x4f) {
+                rex = parseRex(bytes[0]);
+                opcode++;
+            }
+
+            std::ostringstream decoded;
+            switch (*opcode) {
+                // add
+                case 0x05:
+                // xor
+                case 0x35:{
+                    decoded << (*opcode == 0x05 ? "add" : "xor");
+                    int32_t value = parse4ByteImmediate(opcode + 1);
+                    if (rex.W) {
+                        decoded << " $0x" << hex << static_cast<int64_t>(value);
+                        decoded << ", %rax";
+                    } else {
+
+                        decoded << " $0x" << hex << value;
+                        decoded << ", %eax";
+                    }
+                    break;
+                }
+
+                // imul
+                case 0x0F: {
+                    if (*(opcode + 1) != 0xAF) {
+                        decoded << "unknown instruction";
+                        break;
+                    }
+                    decoded << "mul " << parseTwo64bitRegistersFromModRM(*(opcode + 2));
+                    break;
+                }
+
+
+                default:
+                    decoded << "unknown instruction";
+                    break;
+            }
+
+            return decoded.str();
+        }
+
         string decode(const string& concatenatedBytes) {
-            assert(!concatenatedBytes.empty());
+            if (concatenatedBytes.empty()) {
+                return "unknown instruction";
+            }
 
             vector<uint8_t> bytes;
             for (const auto& byteStr : split(concatenatedBytes, ' ')) {
@@ -38,13 +150,8 @@ namespace InstructionDecoding {
                 uint8_t byte = static_cast<uint8_t>(std::stoul(byteStr, 0, 16));
                 bytes.push_back(byte);
             }
-            assert(!bytes.empty());
 
-            if (bytes[0] < 0x40 || bytes[0] > 0x4f) {
-                return "unknown instruction";
-            }
-
-            return concatenatedBytes;
+            return decodeBytes(bytes);
         }
     };
 

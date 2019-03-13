@@ -16,7 +16,10 @@ int main(int argc, char **argv) {
         concatenatedBytes += std::string(argv[i]);
     }
     */
-    std::string concatenatedBytes = "48 89 e5";
-    std::cout << InstructionDecoding::Decoder().decode(concatenatedBytes);
+    InstructionDecoding::Decoder decoder;
+    std::cout << decoder.decode("35 00 00 ab cf") << std::endl;
+    std::cout << decoder.decode("48 35 00 00 ab cf") << std::endl;
+    std::cout << decoder.decode("05 00 00 ab cf") << std::endl;
+    std::cout << decoder.decode("48 05 00 00 ab cf") << std::endl;
     return 0;
 }
