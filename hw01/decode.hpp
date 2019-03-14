@@ -7,6 +7,7 @@
 #include <sstream>
 #include <cassert>
 #include <unordered_map>
+#include <map>
 
 namespace InstructionDecoding {
 
@@ -16,6 +17,7 @@ namespace InstructionDecoding {
     using std::vector;
     using std::hex;
     using std::unordered_map;
+    using std::map;
 
     struct REX {
         bool W;
@@ -136,14 +138,42 @@ namespace InstructionDecoding {
                     break;
                 }
 
+                // jmp rel8
+                case 0xeb: {
+                    decoded << "jmp $0x" << hex << static_cast<int>(parseByteImmediate(opcode + 1)); // TODO
+                    break;
+                }
+
+                // jmp rel32
+                case 0xe9: {
+                    decoded << "jmp $0x" << hex << static_cast<int>(parse4ByteImmediate(opcode + 1)); // TODO
+                    break;
+                }
+
                 // imul
-                case 0x0F: {
-                    if (*(opcode + 1) != 0xAF || !rex.W) {
-                        decoded << "unknown instruction";
+                // rel32 je, jne, jb
+                case 0x0f: {
+                    uint8_t secondPart = *(opcode + 1);
+                    map<uint8_t, string> secondParts {
+                            { 0xaf, "mul" },
+                            { 0x84, "je" },
+                            { 0x85, "jne" },
+                            { 0x82, "jb" }
+                    };
+
+                    if (secondParts.find(secondPart) == secondParts.end()) {
+                        decoded << "uknown instruction";
                         break;
                     }
-                    decoded << "mul " << parseTwo64bitRegistersFromModRM(*(opcode + 2));
-                    break;
+
+                    if (secondPart == 0xaf) {
+                        decoded << "mul " << parseTwo64bitRegistersFromModRM(*(opcode + 2));
+                    }
+                    else {
+                        decoded << secondParts[secondPart] << " $0x" << hex << parse4ByteImmediate(opcode + 2);
+                    }
+
+                   break;
                 }
 
 
@@ -167,6 +197,23 @@ namespace InstructionDecoding {
                 // int3
                 case 0xcc: {
                     decoded << "int3";
+                    break;
+                }
+
+                // rel8
+                // je
+                case 0x74:
+                // jne
+                case 0x75:
+                // jb
+                case 0x72: {
+                    unordered_map<uint8_t, string> opcodesInstructions{
+                            {0x74, "je"},
+                            {0x75, "jne"},
+                            {0x72, "jb"}
+                    };
+                    decoded << opcodesInstructions[*opcode];
+                    decoded << " $0x" << hex << static_cast<int>(parseByteImmediate(opcode + 1)); // TODO
                     break;
                 }
 
