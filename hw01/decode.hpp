@@ -158,6 +158,12 @@ namespace InstructionDecoding {
                     break;
                 }
 
+                // nop
+                case 0x90: {
+                    decoded << "nop";
+                    break;
+                }
+
                 default:
                     decoded << "unknown instruction";
                     break;

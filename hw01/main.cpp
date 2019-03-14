@@ -46,5 +46,6 @@ int main(int argc, char **argv) {
     std::cout << decoder.decode("48 3b " + toHex(0b11011000)) << std::endl;
     std::cout << decoder.decode("48 3b " + toHex(0b11001000)) << std::endl;
     std::cout << decoder.decode("48 3b " + toHex(0b11010000)) << std::endl;
+    std::cout << decoder.decode("90") << std::endl;
     return 0;
 }
