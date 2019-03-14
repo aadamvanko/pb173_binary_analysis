@@ -112,11 +112,18 @@ namespace InstructionDecoding {
 
             std::ostringstream decoded;
             switch (*opcode) {
+                // cmp eax | rax, imm32
+                case 0x3D:
                 // add
                 case 0x05:
                 // xor
                 case 0x35:{
-                    decoded << (*opcode == 0x05 ? "add" : "xor");
+                    unordered_map<uint8_t, string> opcodesInstructions {
+                            { 0x3D, "cmp" },
+                            { 0x05, "add" },
+                            { 0x35, "xor" }
+                    };
+                    decoded << opcodesInstructions[*opcode];
                     int32_t value = parse4ByteImmediate(opcode + 1);
                     if (rex.W) {
                         decoded << " $0x" << hex << static_cast<int64_t>(value);
@@ -139,6 +146,17 @@ namespace InstructionDecoding {
                     break;
                 }
 
+
+
+                // cmp r64, r64
+                case 0x3B: {
+                    if (!rex.W) {
+                        decoded << "unknown instruction";
+                        break;
+                    }
+                    decoded << "cmp " << parseTwo64bitRegistersFromModRM(*(opcode + 1));
+                    break;
+                }
 
                 default:
                     decoded << "unknown instruction";
