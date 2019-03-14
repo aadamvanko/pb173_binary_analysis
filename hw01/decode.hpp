@@ -78,7 +78,9 @@ namespace InstructionDecoding {
         }
 
         ModRM parseModRM(uint8_t byte) {
-            return { byte & 0xc0, byte & 0x38, byte & 0x07 };
+            return { static_cast<uint8_t>(byte & 0xc0),
+                     static_cast<uint8_t>((byte & 0x38) >> 3),
+                     static_cast<uint8_t>(byte & 0x07)};
         }
 
         string parseTwo64bitRegistersFromModRM(uint8_t byte) {
