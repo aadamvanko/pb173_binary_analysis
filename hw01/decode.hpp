@@ -164,6 +164,12 @@ namespace InstructionDecoding {
                     break;
                 }
 
+                // int3
+                case 0xcc: {
+                    decoded << "int3";
+                    break;
+                }
+
                 default:
                     decoded << "unknown instruction";
                     break;
