@@ -68,5 +68,10 @@ int main(int argc, char **argv) {
     std::cout << decoder.decode("0f 85 00 00 00 ab") << std::endl;
     std::cout << decoder.decode("0f 82 00 00 00 ab") << std::endl;
 
+    std::cout << decoder.decode("c3") << std::endl;
+    std::cout << decoder.decode("c2 00 ab") << std::endl;
+
+    std::cout << decoder.decode("e8 00 00 00 ab") << std::endl;
+
     return 0;
 }

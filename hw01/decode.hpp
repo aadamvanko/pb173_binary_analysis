@@ -196,7 +196,7 @@ namespace InstructionDecoding {
 
                 // int3
                 case 0xcc: {
-                    decoded << "int3";
+                    decoded << "int 3";
                     break;
                 }
 
@@ -214,6 +214,24 @@ namespace InstructionDecoding {
                     };
                     decoded << opcodesInstructions[*opcode];
                     decoded << " $0x" << hex << static_cast<int>(parseByteImmediate(opcode + 1)); // TODO
+                    break;
+                }
+
+                // ret
+                case 0xc3: {
+                    decoded << "ret";
+                    break;
+                }
+
+                // ret imm16
+                case 0xc2: {
+                    decoded << "ret " << hex << parse2ByteImmediate(opcode + 1);
+                    break;
+                }
+
+                // call rel32off
+                case 0xe8: {
+                    decoded << "call " << hex << parse4ByteImmediate(opcode + 1);
                     break;
                 }
 
