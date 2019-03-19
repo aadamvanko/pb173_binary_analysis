@@ -80,22 +80,26 @@ namespace InstructionDecoding {
         }
 
         ModRM parseModRM(uint8_t byte) {
-            return { static_cast<uint8_t>(byte & 0xc0),
+            return { static_cast<uint8_t>((byte & 0xc0) >> 6),
                      static_cast<uint8_t>((byte & 0x38) >> 3),
                      static_cast<uint8_t>(byte & 0x07)};
         }
 
-        string parseTwo64bitRegistersFromModRM(uint8_t byte) {
+        string getRegisterName(uint8_t value) {
             unordered_map<uint8_t, string> registers {
                     {0b000, "%rax"},
                     {0b011, "%rbx"},
                     {0b001, "%rcx"},
-                    {0b010, "%rdx"}
+                    {0b010, "%rdx"},
+                    {0b101, "%rbp"}
             };
+            return registers[value];
+        }
 
+        string parseTwo64bitRegistersFromModRM(uint8_t byte) {
             ModRM modRM = parseModRM(byte);
-            string leftOperand = registers[modRM.reg];
-            string rightOperand = registers[modRM.rm];
+            string leftOperand = getRegisterName(modRM.reg);
+            string rightOperand = getRegisterName(modRM.rm);
             return leftOperand + ", " + rightOperand;
         }
 
@@ -234,6 +238,48 @@ namespace InstructionDecoding {
                     decoded << "call " << hex << parse4ByteImmediate(opcode + 1);
                     break;
                 }
+
+                // pop reg64
+                case 0x58:
+                case 0x5b:
+                case 0x59:
+                case 0x5a:
+                case 0x5d: {
+                    decoded << "pop " << getRegisterName(*opcode & 0x07);
+                    break;
+                }
+
+                // pop reg/mem64
+                case 0x8f: {
+                    uint8_t modRMByte = *(opcode + 1);
+                    ModRM modRM = parseModRM(modRMByte);
+                    if (modRM.reg != 0) {
+                        decoded << "unknown instruction";
+                        break;
+                    }
+
+                    decoded << "pop ";
+
+
+                    // register not memory address
+                    if (modRM.mod == 0b11) {
+                        decoded << getRegisterName(modRM.rm);
+                    }
+                    else if (modRM.mod == 0b00 && modRM.rm == 0b101) {
+                        decoded << "0x" << hex << parse4ByteImmediate(opcode + 2) << "(%rip)";
+                    }
+                    else {
+                        // with displacement/offset
+                        if ((modRMByte & 0xf0) == 0x80) { // 4 byte offset
+                            decoded << "0x" << hex << parse4ByteImmediate(opcode + 2);
+                        } else if ((modRMByte & 0x40) == 0x40) { // 1 byte offset
+                            decoded << "0x" << hex << parseByteImmediate(opcode + 2);
+                        }
+                        decoded << '(' << getRegisterName(modRMByte & 0x07) << ')';
+                    }
+                    break;
+                }
+
 
                 default:
                     decoded << "unknown instruction";

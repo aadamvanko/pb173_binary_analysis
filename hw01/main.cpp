@@ -73,5 +73,34 @@ int main(int argc, char **argv) {
 
     std::cout << decoder.decode("e8 00 00 00 ab") << std::endl;
 
+    std::cout << decoder.decode("58") << std::endl;
+    std::cout << decoder.decode("5b") << std::endl;
+    std::cout << decoder.decode("59") << std::endl;
+    std::cout << decoder.decode("5a") << std::endl;
+    std::cout << decoder.decode("5d") << std::endl;
+
+    std::cout << decoder.decode("8f 00") << std::endl;
+    std::cout << decoder.decode("8f 03") << std::endl;
+    std::cout << decoder.decode("8f 01") << std::endl;
+    std::cout << decoder.decode("8f 02") << std::endl;
+    std::cout << decoder.decode("8f 45 00") << std::endl;
+    std::cout << decoder.decode("8f 45 01") << std::endl;
+
+    std::cout << decoder.decode("8f 80 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("8f 83 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("8f 81 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("8f 82 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("8f 85 00 00 00 ab") << std::endl;
+
+    std::cout << decoder.decode("8f c0") << std::endl;
+    std::cout << decoder.decode("8f c3") << std::endl;
+    std::cout << decoder.decode("8f c1") << std::endl;
+    std::cout << decoder.decode("8f c2") << std::endl;
+    std::cout << decoder.decode("8f c5") << std::endl;
+
+    std::cout << decoder.decode("8f 05 00 00 00 00") << std::endl;
+    std::cout << decoder.decode("8f 05 00 00 00 01") << std::endl;
+    std::cout << decoder.decode("8f 05 00 00 00 ab") << std::endl;
+
     return 0;
 }
