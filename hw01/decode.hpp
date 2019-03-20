@@ -268,6 +268,11 @@ namespace InstructionDecoding {
                     else if (modRM.mod == 0b00 && modRM.rm == 0b101) {
                         decoded << "0x" << hex << parse4ByteImmediate(opcode + 2) << "(%rip)";
                     }
+                    else if (modRMByte == 0x04) {
+                        // modRM.mod == 00 thus SIB.index = 0, SIB.base = 0
+                        // skip also SIB byte
+                        decoded << "0x" << hex << parse4ByteImmediate(opcode + 3);
+                    }
                     else {
                         // with displacement/offset
                         if ((modRMByte & 0xf0) == 0x80) { // 4 byte offset

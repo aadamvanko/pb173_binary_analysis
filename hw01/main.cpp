@@ -1,5 +1,4 @@
 #include <iostream>
-#include <string>
 #include <sstream>
 
 #include "decode.hpp"
@@ -101,6 +100,9 @@ int main(int argc, char **argv) {
     std::cout << decoder.decode("8f 05 00 00 00 00") << std::endl;
     std::cout << decoder.decode("8f 05 00 00 00 01") << std::endl;
     std::cout << decoder.decode("8f 05 00 00 00 ab") << std::endl;
+
+    std::cout << decoder.decode("8f 04 25 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("8f 04 25 00 00 00 00") << std::endl;
 
     return 0;
 }
