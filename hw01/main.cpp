@@ -77,6 +77,9 @@ int main(int argc, char **argv) {
     std::cout << decoder.decode("59") << std::endl;
     std::cout << decoder.decode("5a") << std::endl;
     std::cout << decoder.decode("5d") << std::endl;
+    std::cout << decoder.decode("5c") << std::endl;
+    std::cout << decoder.decode("5f") << std::endl;
+    std::cout << decoder.decode("5e") << std::endl;
 
     std::cout << decoder.decode("8f 00") << std::endl;
     std::cout << decoder.decode("8f 03") << std::endl;
@@ -103,6 +106,52 @@ int main(int argc, char **argv) {
 
     std::cout << decoder.decode("8f 04 25 00 00 00 ab") << std::endl;
     std::cout << decoder.decode("8f 04 25 00 00 00 00") << std::endl;
+    std::cout << decoder.decode("8f 04 24") << std::endl;
 
+    std::cout << decoder.decode("8f 04 25 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("8f 04 25 00 00 00 00") << std::endl;
+
+    // push imm64
+
+    std::cout << decoder.decode("68 00 00 00 ab") << std::endl;
+
+    // push reg64
+
+    std::cout << decoder.decode("50") << std::endl;
+    std::cout << decoder.decode("51") << std::endl;
+    std::cout << decoder.decode("52") << std::endl;
+    std::cout << decoder.decode("53") << std::endl;
+    std::cout << decoder.decode("54") << std::endl;
+    std::cout << decoder.decode("55") << std::endl;
+    std::cout << decoder.decode("56") << std::endl;
+    std::cout << decoder.decode("57") << std::endl;
+
+    // push reg/mem64
+
+    std::cout << decoder.decode("ff b0 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("ff b3 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("ff b1 00 00 00 ab") << std::endl;
+    std::cout << decoder.decode("ff b2 00 00 00 ab") << std::endl;
+
+    std::cout << decoder.decode("ff 75 00") << std::endl;
+    std::cout << decoder.decode("ff 75 01") << std::endl;
+    std::cout << decoder.decode("ff b5 00 00 00 ab") << std::endl;
+
+    std::cout << decoder.decode("ff 35 00 00 00 00") << std::endl;
+    std::cout << decoder.decode("ff 35 00 00 00 01") << std::endl;
+    std::cout << decoder.decode("ff 34 25 00 00 00 00") << std::endl;
+    std::cout << decoder.decode("ff 34 25 00 ef cd ab") << std::endl;
+
+    std::cout << decoder.decode("ff 30") << std::endl;
+    std::cout << decoder.decode("ff 33") << std::endl;
+    std::cout << decoder.decode("ff 31") << std::endl;
+    std::cout << decoder.decode("ff 32") << std::endl;
+    std::cout << decoder.decode("ff 35 00 00 00 00") << std::endl;
+    std::cout << decoder.decode("ff 34 24") << std::endl;
+    std::cout << decoder.decode("ff 75 00") << std::endl;
+    std::cout << decoder.decode("ff 36") << std::endl;
+    std::cout << decoder.decode("ff 37") << std::endl;
+
+    std::cout << decoder.decode("ff 34 25 00 ef cd ab") << std::endl;
     return 0;
 }
