@@ -97,6 +97,12 @@ namespace InstructionDecoding {
             return static_cast<int64_t>(value);
         }
 
+        string intToHex(int32_t value) {
+            std::ostringstream os;
+            os << hex << value;
+            return os.str();
+        }
+
     public:
         int8_t parseByteImmediate(uint8_t *immediateStart) {
             return static_cast<int8_t>(parseImmediate(immediateStart, 1));
@@ -353,6 +359,39 @@ namespace InstructionDecoding {
                 case 0x56:
                 case 0x57: {
                     decoded << "push " << getRegisterName(*opcode & 0x07);
+                    break;
+                }
+
+                // mov reg/mem64, reg64
+                case 0x89:
+                // mov reg64, reg/mem64
+                case 0x8b: {
+                    decoded << "mov ";
+
+                    ModRM modRM = parseModRM(*(opcode + 1));
+                    // only registers
+                    if (modRM.mod == 0b11) {
+                        decoded << parseTwo64bitRegistersFromModRM(*(opcode + 1));
+                    }
+                    else {
+                        string regOperand = getRegisterName(modRM.reg);
+                        string memOperand;
+                        if (modRM.mod == 0b00 && modRM.rm == 0b101) { // rip + offset
+                            auto offset = parse4ByteImmediate(opcode + 2);
+                            memOperand = "0x" + intToHex(offset) + "(%rip)";
+                        } else if (modRM.mod != 0b11 && modRM.rm == 0b101) { // rbp
+                            auto offset = parse4ByteImmediate(opcode + 2);
+                            memOperand = "0x" + intToHex(offset) + '(' + getRegisterName(modRM.rm) + ')';
+                        } else {
+                            memOperand = '(' + getRegisterName(modRM.reg) + ')';
+                        }
+
+                        if (*opcode == 0x89) {
+                            decoded << regOperand << ", " << memOperand;
+                        } else { // 0x8b
+                            decoded << memOperand << ", " << regOperand;
+                        }
+                    }
                     break;
                 }
 
