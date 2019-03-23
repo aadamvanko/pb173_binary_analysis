@@ -91,8 +91,7 @@ namespace InstructionDecoding {
         int64_t parseImmediate(uint8_t *startByte, int bytesCount) {
             uint64_t value = 0;
             for (int i = 0; i < bytesCount; i++, startByte++) {
-                value <<= 8;
-                value |= static_cast<uint64_t>(*startByte);
+                value |= static_cast<uint64_t>(*startByte) << (i * 8);
             }
             return static_cast<int64_t>(value);
         }
