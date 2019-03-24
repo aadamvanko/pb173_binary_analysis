@@ -254,7 +254,7 @@ namespace InstructionDecoding {
                             {0x72, "jb"}
                     };
                     decoded << opcodesInstructions[*opcode];
-                    decoded << " $0x" << hex << static_cast<int>(parseByteImmediate(opcode + 1)); // TODO
+                    decoded << " $0x" << toHex(parseByteImmediate(opcode + 1));
                     break;
                 }
 
