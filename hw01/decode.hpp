@@ -136,7 +136,7 @@ namespace InstructionDecoding
                      .base = static_cast<uint8_t>((byte & 0x07)) };
         }
 
-        int64_t parseImmediate(uint8_t *startByte, int bytesCount) {
+        int64_t parseImmediate(const uint8_t *startByte, int bytesCount) {
             uint64_t value = 0;
             for (int i = 0; i < bytesCount; i++, startByte++) {
                 value |= static_cast<uint64_t>(*startByte) << (i * 8);
@@ -162,19 +162,19 @@ namespace InstructionDecoding
             return os.str();
         }
 
-        int8_t parseByteImmediate(uint8_t *immediateStart) {
+        int8_t parseByteImmediate(const uint8_t *immediateStart) {
             return static_cast<int8_t>(parseImmediate(immediateStart, 1));
         }
 
-        int16_t parse2ByteImmediate(uint8_t *immediateStart) {
+        int16_t parse2ByteImmediate(const uint8_t *immediateStart) {
             return static_cast<int16_t>(parseImmediate(immediateStart, 2));
         }
 
-        int32_t parse4ByteImmediate(uint8_t *immediateStart) {
+        int32_t parse4ByteImmediate(const uint8_t *immediateStart) {
             return static_cast<int32_t>(parseImmediate(immediateStart, 4));
         }
 
-        int64_t parse8ByteImmediate(uint8_t *immediateStart) {
+        int64_t parse8ByteImmediate(const uint8_t *immediateStart) {
             return static_cast<int64_t>(parseImmediate(immediateStart, 8));
         }
 
@@ -202,14 +202,13 @@ namespace InstructionDecoding
                      { getRegisterName(modRM.rm), 0, true } };
         }
 
-    public:
-        Instruction decodeBytes(uint8_t* bytes) {
+        Instruction decodeBytes(const uint8_t* bytes) {
             if (bytes == nullptr) {
                 return {};
             }
 
             Instruction UnknownInstruction { "unknown instruction", {}, {} };
-            uint8_t* opcode = bytes;
+            const uint8_t* opcode = bytes;
 
             REX rex{};
             if (bytes[0] >= 0x40 && bytes[0] <= 0x4f) {
@@ -290,7 +289,7 @@ namespace InstructionDecoding
 
 
 
-                // cmp r64, r64
+                    // cmp r64, r64
                 case 0x3B: {
                     if (!rex.W) {
                         return UnknownInstruction;
@@ -491,20 +490,48 @@ namespace InstructionDecoding
             return decoded;
         }
 
-        string decode(const string& concatenatedBytes) {
-            if (concatenatedBytes.empty()) {
-                return "unknown instruction";
-            }
+    public:
+        // Instruction variants
+        Instruction decodeInstruction(const vector<uint8_t>& bytes) {
+            return decodeBytes(&bytes[0]);
+        }
 
+        Instruction decodeInstruction(const vector<const char*>& bytes) {
+            std::string concatenatedBytes;
+            for (int i = 0; i < bytes.size(); i++) {
+                if (i != 0) {
+                    concatenatedBytes += " ";
+                }
+                concatenatedBytes += std::string(bytes[i]);
+            }
+            return decodeInstruction(concatenatedBytes);
+        }
+
+        Instruction decodeInstruction(const string& concatenatedBytes) {
             vector<uint8_t> bytes;
             for (const auto& byteStr : split(concatenatedBytes, ' ')) {
-                assert(!byteStr.empty());
                 uint8_t byte = static_cast<uint8_t>(std::stoul(byteStr, 0, 16));
                 bytes.push_back(byte);
             }
-
-            return decodeBytes(&bytes[0]).toStr();
+            return decodeBytes(&bytes[0]);
         }
+
+        // string variants
+        string decodeInstructionToStr(const vector<uint8_t>& bytes) {
+            return decodeInstruction(bytes).toStr();
+        }
+
+        string decodeInstructionToStr(const vector<const char*>& bytes) {
+            return decodeInstruction(bytes).toStr();
+        }
+
+        string decodeInstructionToStr(const string &concatenatedBytes) {
+            return decodeInstruction(concatenatedBytes).toStr();
+        }
+
+        // stream variants
+        vector<Instruction> decodeInstructions(const vector<uint8_t>& bytes);
+        vector<Instruction> decodeInstructions(const vector<const char*>& bytes);
     };
 
 }
