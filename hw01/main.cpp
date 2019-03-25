@@ -11,7 +11,7 @@ std::string toHex(int byte) {
 }
 
 int main(int argc, char **argv) {
-
+/*
     if (argc == 1) {
         std::cout << "Too few arguments, missing bytes to decode!" << std::endl;
         return -1;
@@ -25,8 +25,8 @@ int main(int argc, char **argv) {
         concatenatedBytes += std::string(argv[i]);
     }
     std::cout << InstructionDecoding::Decoder().decode(concatenatedBytes) << std::endl;
+*/
 
-/*
     InstructionDecoding::Decoder decoder;
     std::cout << decoder.decode("35 ab cf 00 00") << std::endl;
     std::cout << decoder.decode("48 35 ab cf 00 00") << std::endl;
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
     std::cout << decoder.decode("48 8b 85 ab 00 00 00") << std::endl;
     std::cout << decoder.decode("48 8b 1d ab 00 00 00") << std::endl;
     std::cout << decoder.decode("48 8b 9d ab 00 00 00") << std::endl;
-*/
+
 
     return 0;
 }
