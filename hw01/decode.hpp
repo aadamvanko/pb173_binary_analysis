@@ -69,6 +69,7 @@ namespace InstructionDecoding
         std::string mnemonic;
         Operand operandA;
         Operand operandB;
+        int length = 0;
 
         std::string toStr() const {
             std::string str = mnemonic;
@@ -88,6 +89,7 @@ namespace InstructionDecoding
     std::ostream& operator<<(std::ostream& os, const Instruction& instruction)
     {
         os << instruction.toStr();
+        return os;
     }
 
     using std::string;
@@ -102,7 +104,6 @@ namespace InstructionDecoding
     using RegistersPair = std::pair<Operand, Operand>;
 
     class Decoder {
-
     private:
         vector<string> split(const string& str, char delim)  {
             vector<string> tokens;
@@ -202,18 +203,40 @@ namespace InstructionDecoding
                      { getRegisterName(modRM.rm), 0, true } };
         }
 
+        vector<uint8_t> toBytes(const vector<const char*>& bytes) {
+            std::string concatenatedBytes;
+            for (int i = 0; i < bytes.size(); i++) {
+                if (i != 0) {
+                    concatenatedBytes += " ";
+                }
+                concatenatedBytes += std::string(bytes[i]);
+            }
+            return toBytes(concatenatedBytes);
+        }
+
+        vector<uint8_t> toBytes(const string& concatenatedBytes) {
+            vector<uint8_t> bytes;
+            for (const auto& byteStr : split(concatenatedBytes, ' ')) {
+                uint8_t byte = static_cast<uint8_t>(std::stoul(byteStr, 0, 16));
+                bytes.push_back(byte);
+            }
+            return bytes;
+        }
+
         Instruction decodeBytes(const uint8_t* bytes) {
             if (bytes == nullptr) {
                 return {};
             }
 
-            Instruction UnknownInstruction { "unknown instruction", {}, {} };
+            Instruction UnknownInstruction { "unknown instruction", {}, {}, 1 };
             const uint8_t* opcode = bytes;
+            int instructionLength = 1;
 
             REX rex{};
             if (bytes[0] >= 0x40 && bytes[0] <= 0x4f) {
                 rex = parseRex(bytes[0]);
                 opcode++;
+                instructionLength++;
             }
 
             Instruction decoded;
@@ -239,6 +262,7 @@ namespace InstructionDecoding
                         decoded.operandA = { "$0x" + int32ToHex(value), value, false };
                         decoded.operandB = { "%eax", 0, true };
                     }
+                    instructionLength += 4;
                     break;
                 }
 
@@ -247,6 +271,7 @@ namespace InstructionDecoding
                     decoded.mnemonic = "jmp";
                     int8_t value = parseByteImmediate(opcode + 1);
                     decoded.operandA = { "$0x" + uint8ToHexStr(value), value, false };
+                    instructionLength += 1;
                     break;
                 }
 
@@ -255,6 +280,7 @@ namespace InstructionDecoding
                     decoded.mnemonic = "jmp";
                     int32_t value = parse4ByteImmediate(opcode + 1);
                     decoded.operandA = { "$0x" + int32ToHex(value), value, false };
+                    instructionLength += 4;
                     break;
                 }
 
@@ -268,6 +294,7 @@ namespace InstructionDecoding
                             { 0x85, "jne" },
                             { 0x82, "jb" }
                     };
+                    instructionLength += 1;
 
                     if (secondParts.find(secondPart) == secondParts.end()) {
                         return UnknownInstruction;
@@ -278,11 +305,13 @@ namespace InstructionDecoding
                         auto registers = parseTwo64bitRegistersFromModRM(*(opcode + 2));
                         decoded.operandA = registers.first;
                         decoded.operandB = registers.second;
+                        instructionLength += 1;
                     }
                     else {
                         decoded.mnemonic = secondParts[secondPart];
                         int32_t value = parse4ByteImmediate(opcode + 2);
                         decoded.operandA = {"$0x" + int32ToHex(value), value, false};
+                        instructionLength += 4;
                     }
                     break;
                 }
@@ -298,6 +327,7 @@ namespace InstructionDecoding
                     auto registers = parseTwo64bitRegistersFromModRM(*(opcode + 1));
                     decoded.operandA = registers.first;
                     decoded.operandB = registers.second;
+                    instructionLength += 1;
                     break;
                 }
 
@@ -328,6 +358,7 @@ namespace InstructionDecoding
                     decoded.mnemonic = opcodesInstructions[*opcode];
                     int8_t value = parseByteImmediate(opcode + 1);
                     decoded.operandA = { "$0x" + uint8ToHexStr(value), value, false };
+                    instructionLength += 1;
                     break;
                 }
 
@@ -342,6 +373,7 @@ namespace InstructionDecoding
                     decoded.mnemonic = "ret";
                     int16_t value = parse2ByteImmediate(opcode + 1);
                     decoded.operandA = { "$0x" + int16ToHex(value), value, false };
+                    instructionLength += 2;
                     break;
                 }
 
@@ -350,6 +382,7 @@ namespace InstructionDecoding
                     decoded.mnemonic = "call";
                     int32_t value = parse4ByteImmediate(opcode + 1);
                     decoded.operandA = { int32ToHex(value), value, false };
+                    instructionLength += 4;
                     break;
                 }
 
@@ -373,6 +406,7 @@ namespace InstructionDecoding
                 case 0x8f: {
                     uint8_t modRMByte = *(opcode + 1);
                     ModRM modRM = parseModRM(modRMByte);
+                    instructionLength += 1;
 
                     // opcode, <mnemonic, reg field>
                     map<uint8_t, std::pair<string, uint8_t>> opcodes {
@@ -393,6 +427,7 @@ namespace InstructionDecoding
                     else if (modRM.mod == 0b00 && modRM.rm == 0b101) {
                         int32_t value = parse4ByteImmediate(opcode + 2);
                         decoded.operandA = { "0x" + int32ToHex(value) + "(%rip)", value, false };
+                        instructionLength += 4;
                     }
                     else if (modRMByte == 0x04 || modRMByte == 0x34) { // pop, push
                         // SIB !!!
@@ -400,12 +435,14 @@ namespace InstructionDecoding
                         // skip also SIB byte
                         SIB SIB = parseSIB(*(opcode + 2));
                         uint8_t SIBByte = *(opcode + 2);
+                        instructionLength += 1;
                         if (modRM.mod == 0 && SIB.index == 0b100 && SIB.base != 0b101) {
                             decoded.operandA = { '(' + getRegisterName(SIBByte & 0x07) + ')', 0, false };
                         }
                         else {
                             int32_t value = parse4ByteImmediate(opcode + 3);
                             decoded.operandA = { "0x" + int32ToHex(value), value, false };
+                            instructionLength += 4;
                         }
                     }
                     else {
@@ -414,9 +451,11 @@ namespace InstructionDecoding
                         if ((modRMByte & 0xf0) == 0x80 || (modRMByte & 0xf0) == 0xb0) { // 4 byte offset
                             int32_t value = parse4ByteImmediate(opcode + 2);
                             decoded.operandA = { "0x" + int32ToHex(value), 0, false };
+                            instructionLength += 4;
                         } else if ((modRMByte & 0xf0) == 0x40 || (modRMByte & 0xf0) == 0x70) { // 1 byte offset
                             int8_t value = parseByteImmediate(opcode + 2);
                             decoded.operandA = { "0x" + uint8ToHexStr(value), value, false };
+                            instructionLength += 1;
                         }
                         string baseRegister = '(' + getRegisterName(modRMByte & 0x07) + ')';
                         decoded.operandA = { decoded.operandA.representation + baseRegister, 0, false };
@@ -429,6 +468,7 @@ namespace InstructionDecoding
                     decoded.mnemonic = "push";
                     int64_t value = parse4ByteImmediate(opcode + 1);
                     decoded.operandA = { "$0x" + int64ToHex(value), value, false };
+                    instructionLength += 4;
                     break;
                 }
 
@@ -451,8 +491,9 @@ namespace InstructionDecoding
                     // mov reg64, reg/mem64
                 case 0x8b: {
                     decoded.mnemonic = "mov";
-
                     ModRM modRM = parseModRM(*(opcode + 1));
+                    instructionLength += 1;
+
                     // only registers
                     if (modRM.mod == 0b11) {
                         auto registers = parseTwo64bitRegistersFromModRM(*(opcode + 1));
@@ -465,9 +506,11 @@ namespace InstructionDecoding
                         if (modRM.mod == 0b00 && modRM.rm == 0b101) { // rip + offset
                             int32_t offset = parse4ByteImmediate(opcode + 2);
                             memOperand = { "0x" + int32ToHex(offset) + "(%rip)", offset, false };
+                            instructionLength += 4;
                         } else if (modRM.mod != 0b11 && modRM.rm == 0b101) { // rbp
                             auto offset = parse4ByteImmediate(opcode + 2);
                             memOperand = { "0x" + int32ToHex(offset) + '(' + getRegisterName(modRM.rm) + ')', offset, false };
+                            instructionLength += 4;
                         } else {
                             memOperand = { '(' + getRegisterName(modRM.reg) + ')', 0, false };
                         }
@@ -487,6 +530,7 @@ namespace InstructionDecoding
                     return UnknownInstruction;
             }
 
+            decoded.length = instructionLength;
             return decoded;
         }
 
@@ -497,23 +541,11 @@ namespace InstructionDecoding
         }
 
         Instruction decodeInstruction(const vector<const char*>& bytes) {
-            std::string concatenatedBytes;
-            for (int i = 0; i < bytes.size(); i++) {
-                if (i != 0) {
-                    concatenatedBytes += " ";
-                }
-                concatenatedBytes += std::string(bytes[i]);
-            }
-            return decodeInstruction(concatenatedBytes);
+            return decodeInstruction(toBytes(bytes));
         }
 
         Instruction decodeInstruction(const string& concatenatedBytes) {
-            vector<uint8_t> bytes;
-            for (const auto& byteStr : split(concatenatedBytes, ' ')) {
-                uint8_t byte = static_cast<uint8_t>(std::stoul(byteStr, 0, 16));
-                bytes.push_back(byte);
-            }
-            return decodeBytes(&bytes[0]);
+            return decodeInstruction(toBytes(concatenatedBytes));
         }
 
         // string variants
@@ -530,8 +562,25 @@ namespace InstructionDecoding
         }
 
         // stream variants
-        vector<Instruction> decodeInstructions(const vector<uint8_t>& bytes);
-        vector<Instruction> decodeInstructions(const vector<const char*>& bytes);
+        vector<Instruction> decodeInstructions(const vector<uint8_t>& bytes) {
+            vector<Instruction> instructions;
+            const uint8_t *instructionPtr = &bytes[0];
+            while (instructionPtr != &bytes[0] + bytes.size()) {
+                Instruction instruction = decodeBytes(instructionPtr);
+                instructions.push_back(instruction);
+                instructionPtr += instruction.length;
+            }
+            return instructions;
+        }
+
+        vector<Instruction> decodeInstructions(const vector<const char*>& bytes) {
+            return decodeInstructions(toBytes(bytes));
+        }
+
+        vector<Instruction> decodeInstructions(const string& concatenatedBytes) {
+            return decodeInstructions(toBytes(concatenatedBytes));
+        }
+
     };
 
 }
