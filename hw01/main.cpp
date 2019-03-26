@@ -10,21 +10,30 @@ std::string toHex(int byte) {
     return os.str();
 }
 
-int main(int argc, char **argv) {
-    if (argc == 1) {
-        std::cout << "Too few arguments, missing bytes to decode!" << std::endl;
-        return -1;
-    }
+int main(int argc, char* argv[]) {
+    using InstructionDecoding::Instruction;
+    using std::string;
+    using std::cout;
+    using std::endl;
+    using std::cin;
 
-    std::string concatenatedBytes;
-    for (int i = 1; i < argc; i++) {
-        if (i != 1) {
-            concatenatedBytes += " ";
+    InstructionDecoding::Decoder decoder;
+    std::vector<Instruction> instructions;
+    if (argc > 1) {
+        instructions = decoder.decodeInstructions(std::vector<const char*>(argv + 1, argv + argc));
+    }
+    else {
+        string concatenatedBytes;
+        string byte;
+        while (cin >> byte) {
+            concatenatedBytes += (concatenatedBytes.empty() ? "" : " ") + byte;
         }
-        concatenatedBytes += std::string(argv[i]);
+        instructions = decoder.decodeInstructions(concatenatedBytes);
     }
-    std::cout << InstructionDecoding::Decoder().decodeInstructionToStr(concatenatedBytes) << std::endl;
 
+    for (const auto& instruction : instructions) {
+        cout << instruction << endl;
+    }
 /*
     for (InstructionDecoding::Instruction instruction : InstructionDecoding::Decoder().decodeInstructions(std::vector<const char*>(argv + 1, argv + argc))) {
         std::cout << instruction.toStr() << std::endl;
