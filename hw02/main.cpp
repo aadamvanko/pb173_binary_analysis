@@ -18,14 +18,14 @@ int main(int argc, char* argv[]) {
         instructions = decoder.decodeInstructions(std::vector<const char*>(argv + 1, argv + argc));
     }
     else {
-        /*std::vector<uint8_t> bytes;
-        uint8_t byte;
+        string concatenatedBytes;
+        string byte;
         while (cin >> byte) {
-            bytes.push_back(byte);
+            concatenatedBytes += (concatenatedBytes.empty() ? "" : " ") + byte;
         }
-        instructions = decoder.decodeInstructions(bytes);*/
+        instructions = decoder.decodeInstructions(concatenatedBytes);
     }
-
+/*
     instructions = {
             { "nop0", {}, {}, 0 },
             { "nop1", {}, {}, 0 },
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
             { "nop4", {}, {}, 0 },
             { "nop5", {}, {}, 0 },
             { "nop6", {}, {}, 0 },
-            { "jmp7", { "", 3, false }, {}, 0 },
+            { "jmp", { "", 3, false }, {}, 0 },
             { "nop8", {}, {}, 0 },
             { "nop9", {}, {}, 0 },
             { "nop10", {}, {}, 0 },
@@ -47,8 +47,9 @@ int main(int argc, char* argv[]) {
             { "nop14", {}, {}, 0 },
             { "nop15", {}, {}, 0 },
             { "nop16", {}, {}, 0 },
+            { "jb", { "", -1, false }, {}, 0 },
 
-    };
+    };*/
 
     ControlFlowGraph controlFlowGraph;
     string dotSource = controlFlowGraph.generateDotSource(instructions);
