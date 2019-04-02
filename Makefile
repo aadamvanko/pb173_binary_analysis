@@ -7,3 +7,11 @@ decode:
 	
 cfg:
 	$(CXX) $(CXXFLAGS) -o cfg hw02/main.cpp
+	
+elf: decode.elf cfg.elf
+
+decode.elf:
+	$(CXX) $(CXXFLAGS) -o decode.elf hw03/decode-elf/main.cpp
+	
+cfg.elf:
+	$(CXX) $(CXXFLAGS) -o cfg.elf hw03/cfg-elf/main.cpp

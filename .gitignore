@@ -33,6 +33,9 @@ temp
 *.out
 *.app
 decode
+cfg
+decode.elf
+cfg.elf
 hw2
 hw3
 hw4
