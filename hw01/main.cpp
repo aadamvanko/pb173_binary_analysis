@@ -300,12 +300,12 @@ int main(int argc, char* argv[]) {
     std::cout << decoder.decodeInstructionToStr("48 89 c4") << std::endl; //                mov    %rax,%rsp
     std::cout << decoder.decodeInstructionToStr("48 89 04 24") << std::endl; //             mov    %rax,(%rsp)
     std::cout << decoder.decodeInstructionToStr("48 89 04 24") << std::endl; //             mov    %rax,(%rsp)
-    std::cout << decoder.decodeInstructionToStr("48 89 84 24 ab 00 00") << std::endl; //    mov    %rax,0xab(%rsp)
+    std::cout << decoder.decodeInstructionToStr("48 89 84 24 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rsp)
     std::cout << decoder.decodeInstructionToStr("48 89 44 24 fb") << std::endl; //          mov    %rax,-0x5(%rsp)
     std::cout << decoder.decodeInstructionToStr("48 89 e0") << std::endl; //                mov    %rsp,%rax
     std::cout << decoder.decodeInstructionToStr("48 8b 04 24") << std::endl; //             mov    (%rsp),%rax
     std::cout << decoder.decodeInstructionToStr("48 8b 04 24") << std::endl; //             mov    (%rsp),%rax
-    std::cout << decoder.decodeInstructionToStr("48 8b 84 24 ab 00 00") << std::endl; //    mov    0xab(%rsp),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 84 24 ab 00 00 00") << std::endl; //    mov    0xab(%rsp),%rax
     std::cout << decoder.decodeInstructionToStr("48 8b 44 24 fb") << std::endl; //          mov    -0x5(%rsp),%rax
 
 
