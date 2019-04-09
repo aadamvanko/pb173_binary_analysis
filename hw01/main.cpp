@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     using std::endl;
     using std::cin;
 
-    InstructionDecoding::Decoder decoder;
+    InstructionDecoding::Decoder decoder;/*
     std::vector<Instruction> instructions;
     if (argc > 1) {
         instructions = decoder.decodeInstructions(std::vector<const char*>(argv + 1, argv + argc));
@@ -34,13 +34,13 @@ int main(int argc, char* argv[]) {
     for (const auto& instruction : instructions) {
         cout << instruction << endl;
     }
-/*
+
     for (InstructionDecoding::Instruction instruction : InstructionDecoding::Decoder().decodeInstructions(std::vector<const char*>(argv + 1, argv + argc))) {
         std::cout << instruction.toStr() << std::endl;
     }
 
     std::cout << "----------------------------------------------------";
-
+*/
     // xor
     std::cout << decoder.decodeInstructionToStr("35 ab cf 00 00") << std::endl;
     std::cout << decoder.decodeInstructionToStr("48 35 ab cf 00 00") << std::endl;
@@ -243,7 +243,71 @@ int main(int argc, char* argv[]) {
     std::cout << decoder.decodeInstructionToStr("48 8b 85 ab 00 00 00") << std::endl;
     std::cout << decoder.decodeInstructionToStr("48 8b 1d ab 00 00 00") << std::endl;
     std::cout << decoder.decodeInstructionToStr("48 8b 9d ab 00 00 00") << std::endl;
-*/
+
+    std::cout << decoder.decodeInstructionToStr("48 89 00") << std::endl; //                mov    %rax,(%rax)
+    std::cout << decoder.decodeInstructionToStr("48 89 03") << std::endl; //                mov    %rax,(%rbx)
+    std::cout << decoder.decodeInstructionToStr("48 89 01") << std::endl; //                mov    %rax,(%rcx)
+    std::cout << decoder.decodeInstructionToStr("48 89 02") << std::endl; //                mov    %rax,(%rdx)
+    std::cout << decoder.decodeInstructionToStr("48 89 05 00 00 00 00") << std::endl; //    mov    %rax,0x0(%rip)        # 400596 <main+0x106>
+    std::cout << decoder.decodeInstructionToStr("48 89 45 00") << std::endl; //             mov    %rax,0x0(%rbp)
+    std::cout << decoder.decodeInstructionToStr("48 89 07") << std::endl; //                mov    %rax,(%rdi)
+    std::cout << decoder.decodeInstructionToStr("48 89 06") << std::endl; //                mov    %rax,(%rsi)
+
+    std::cout << decoder.decodeInstructionToStr("48 8b 00") << std::endl; //                mov    (%rax),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 03") << std::endl; //                mov    (%rbx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 01") << std::endl; //                mov    (%rcx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 02") << std::endl; //                mov    (%rdx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 05 00 00 00 00") << std::endl; //    mov    0x0(%rip),%rax        # 4005b3 <main+0x123>
+    std::cout << decoder.decodeInstructionToStr("48 8b 45 00") << std::endl; //             mov    0x0(%rbp),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 07") << std::endl; //                mov    (%rdi),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 06") << std::endl; //                mov    (%rsi),%rax
+
+    std::cout << decoder.decodeInstructionToStr("48 89 80 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rax)
+    std::cout << decoder.decodeInstructionToStr("48 89 83 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rbx)
+    std::cout << decoder.decodeInstructionToStr("48 89 81 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rcx)
+    std::cout << decoder.decodeInstructionToStr("48 89 82 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rdx)
+    std::cout << decoder.decodeInstructionToStr("48 89 05 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rip)        # 40068b <main+0x1fb>
+    std::cout << decoder.decodeInstructionToStr("48 89 85 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rbp)
+    std::cout << decoder.decodeInstructionToStr("48 89 87 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rdi)
+    std::cout << decoder.decodeInstructionToStr("48 89 86 ab 00 00 00") << std::endl; //    mov    %rax,0xab(%rsi)
+
+    std::cout << decoder.decodeInstructionToStr("48 8b 80 ab 00 00 00") << std::endl; //    mov    0xab(%rax),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 83 ab 00 00 00") << std::endl; //    mov    0xab(%rbx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 81 ab 00 00 00") << std::endl; //    mov    0xab(%rcx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 82 ab 00 00 00") << std::endl; //    mov    0xab(%rdx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 05 ab 00 00 00") << std::endl; //    mov    0xab(%rip),%rax        # 4006c3 <main+0x233>
+    std::cout << decoder.decodeInstructionToStr("48 8b 85 ab 00 00 00") << std::endl; //    mov    0xab(%rbp),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 87 ab 00 00 00") << std::endl; //    mov    0xab(%rdi),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 86 ab 00 00 00") << std::endl; //    mov    0xab(%rsi),%rax
+
+    std::cout << decoder.decodeInstructionToStr("48 89 40 fb") << std::endl; //             mov    %rax,-0x5(%rax)
+    std::cout << decoder.decodeInstructionToStr("48 89 43 fb") << std::endl; //             mov    %rax,-0x5(%rbx)
+    std::cout << decoder.decodeInstructionToStr("48 89 41 fb") << std::endl; //             mov    %rax,-0x5(%rcx)
+    std::cout << decoder.decodeInstructionToStr("48 89 42 fb") << std::endl; //             mov    %rax,-0x5(%rdx)
+    std::cout << decoder.decodeInstructionToStr("48 89 05 fb ff ff ff") << std::endl; //    mov    %rax,-0x5(%rip)        # 40063f <main+0x1af>
+    std::cout << decoder.decodeInstructionToStr("48 89 45 fb") << std::endl; //             mov    %rax,-0x5(%rbp)
+    std::cout << decoder.decodeInstructionToStr("48 89 47 fb") << std::endl; //             mov    %rax,-0x5(%rdi)
+    std::cout << decoder.decodeInstructionToStr("48 89 46 fb") << std::endl; //             mov    %rax,-0x5(%rsi)
+
+    std::cout << decoder.decodeInstructionToStr("48 8b 40 fb") << std::endl; //             mov    -0x5(%rax),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 43 fb") << std::endl; //             mov    -0x5(%rbx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 41 fb") << std::endl; //             mov    -0x5(%rcx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 42 fb") << std::endl; //             mov    -0x5(%rdx),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 05 fb ff ff ff") << std::endl; //    mov    -0x5(%rip),%rax        # 400662 <main+0x1d2>
+    std::cout << decoder.decodeInstructionToStr("48 8b 47 fb") << std::endl; //             mov    -0x5(%rdi),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 46 fb") << std::endl; //             mov    -0x5(%rsi),%rax
+
+    std::cout << decoder.decodeInstructionToStr("48 89 c4") << std::endl; //                mov    %rax,%rsp
+    std::cout << decoder.decodeInstructionToStr("48 89 04 24") << std::endl; //             mov    %rax,(%rsp)
+    std::cout << decoder.decodeInstructionToStr("48 89 04 24") << std::endl; //             mov    %rax,(%rsp)
+    std::cout << decoder.decodeInstructionToStr("48 89 84 24 ab 00 00") << std::endl; //    mov    %rax,0xab(%rsp)
+    std::cout << decoder.decodeInstructionToStr("48 89 44 24 fb") << std::endl; //          mov    %rax,-0x5(%rsp)
+    std::cout << decoder.decodeInstructionToStr("48 89 e0") << std::endl; //                mov    %rsp,%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 04 24") << std::endl; //             mov    (%rsp),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 04 24") << std::endl; //             mov    (%rsp),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 84 24 ab 00 00") << std::endl; //    mov    0xab(%rsp),%rax
+    std::cout << decoder.decodeInstructionToStr("48 8b 44 24 fb") << std::endl; //          mov    -0x5(%rsp),%rax
+
 
     return 0;
 }
