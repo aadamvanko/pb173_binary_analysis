@@ -308,6 +308,116 @@ int main(int argc, char* argv[]) {
     std::cout << decoder.decodeInstructionToStr("48 8b 84 24 ab 00 00 00") << std::endl; //    mov    0xab(%rsp),%rax
     std::cout << decoder.decodeInstructionToStr("48 8b 44 24 fb") << std::endl; //          mov    -0x5(%rsp),%rax
 
+    std::cout << "--------------- mov with immediates -------------------" << std::endl;
+    // mov with immediates
+    std::cout << decoder.decodeInstructionToStr("48 c7 c0 00 00 00 00") << std::endl; //    mov    $0x0,%rax
+    std::cout << decoder.decodeInstructionToStr("48 c7 c3 00 00 00 00") << std::endl; //    mov    $0x0,%rbx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c1 00 00 00 00") << std::endl; //    mov    $0x0,%rcx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c2 00 00 00 00") << std::endl; //    mov    $0x0,%rdx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c5 00 00 00 00") << std::endl; //    mov    $0x0,%rbp
+    std::cout << decoder.decodeInstructionToStr("48 c7 c7 00 00 00 00") << std::endl; //    mov    $0x0,%rdi
+    std::cout << decoder.decodeInstructionToStr("48 c7 c6 00 00 00 00") << std::endl; //    mov    $0x0,%rsi
+    std::cout << decoder.decodeInstructionToStr("48 c7 c0 ab 00 00 00") << std::endl; //    mov    $0xab,%rax
+    std::cout << decoder.decodeInstructionToStr("48 c7 c3 ab 00 00 00") << std::endl; //    mov    $0xab,%rbx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c1 ab 00 00 00") << std::endl; //    mov    $0xab,%rcx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c2 ab 00 00 00") << std::endl; //    mov    $0xab,%rdx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c5 ab 00 00 00") << std::endl; //    mov    $0xab,%rbp
+    std::cout << decoder.decodeInstructionToStr("48 c7 c7 ab 00 00 00") << std::endl; //    mov    $0xab,%rdi
+    std::cout << decoder.decodeInstructionToStr("48 c7 c6 ab 00 00 00") << std::endl; //    mov    $0xab,%rsi
+    std::cout << decoder.decodeInstructionToStr("48 c7 c0 fb ff ff ff") << std::endl; //    mov    $0xfffffffffffffffb,%rax
+    std::cout << decoder.decodeInstructionToStr("48 c7 c3 fb ff ff ff") << std::endl; //    mov    $0xfffffffffffffffb,%rbx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c1 fb ff ff ff") << std::endl; //    mov    $0xfffffffffffffffb,%rcx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c2 fb ff ff ff") << std::endl; //    mov    $0xfffffffffffffffb,%rdx
+    std::cout << decoder.decodeInstructionToStr("48 c7 c5 fb ff ff ff") << std::endl; //    mov    $0xfffffffffffffffb,%rbp
+    std::cout << decoder.decodeInstructionToStr("48 c7 c7 fb ff ff ff") << std::endl; //    mov    $0xfffffffffffffffb,%rdi
+    std::cout << decoder.decodeInstructionToStr("48 c7 c6 fb ff ff ff") << std::endl; //    mov    $0xfffffffffffffffb,%rsi
+    std::cout << decoder.decodeInstructionToStr("48 c7 c4 00 00 00 00") << std::endl; //    mov    $0x0,%rsp
+    std::cout << decoder.decodeInstructionToStr("48 c7 c4 ab 00 00 00") << std::endl; //    mov    $0xab,%rsp
+    std::cout << decoder.decodeInstructionToStr("48 c7 c4 fb ff ff ff") << std::endl; //    mov    $0xfffffffffffffffb,%rsp
+
+    std::cout << decoder.decodeInstructionToStr("c7 00 00 00 00 00") << std::endl; //       movl   $0x0,(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 03 00 00 00 00") << std::endl; //       movl   $0x0,(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 01 00 00 00 00") << std::endl; //       movl   $0x0,(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 02 00 00 00 00") << std::endl; //       movl   $0x0,(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 45 00 00 00 00 00") << std::endl; //    movl   $0x0,0x0(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 07 00 00 00 00") << std::endl; //       movl   $0x0,(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 06 00 00 00 00") << std::endl; //       movl   $0x0,(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 00 ab 00 00 00") << std::endl; //       movl   $0xab,(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 03 ab 00 00 00") << std::endl; //       movl   $0xab,(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 01 ab 00 00 00") << std::endl; //       movl   $0xab,(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 02 ab 00 00 00") << std::endl; //       movl   $0xab,(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 45 00 ab 00 00 00") << std::endl; //    movl   $0xab,0x0(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 07 ab 00 00 00") << std::endl; //       movl   $0xab,(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 06 ab 00 00 00") << std::endl; //       movl   $0xab,(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 00 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 03 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 01 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 02 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 45 00 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,0x0(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 07 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 06 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 04 24 00 00 00 00") << std::endl; //    movl   $0x0,(%rsp)
+    std::cout << decoder.decodeInstructionToStr("c7 04 24 ab 00 00 00") << std::endl; //    movl   $0xab,(%rsp)
+    std::cout << decoder.decodeInstructionToStr("c7 04 24 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,(%rsp)
+    std::cout << decoder.decodeInstructionToStr("c7 00 00 00 00 00") << std::endl; //       movl   $0x0,(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 03 00 00 00 00") << std::endl; //       movl   $0x0,(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 01 00 00 00 00") << std::endl; //       movl   $0x0,(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 02 00 00 00 00") << std::endl; //       movl   $0x0,(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 45 00 00 00 00 00") << std::endl; //    movl   $0x0,0x0(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 07 00 00 00 00") << std::endl; //       movl   $0x0,(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 06 00 00 00 00") << std::endl; //       movl   $0x0,(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 00 ab 00 00 00") << std::endl; //       movl   $0xab,(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 03 ab 00 00 00") << std::endl; //       movl   $0xab,(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 01 ab 00 00 00") << std::endl; //       movl   $0xab,(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 02 ab 00 00 00") << std::endl; //       movl   $0xab,(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 45 00 ab 00 00 00") << std::endl; //    movl   $0xab,0x0(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 07 ab 00 00 00") << std::endl; //       movl   $0xab,(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 06 ab 00 00 00") << std::endl; //       movl   $0xab,(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 00 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 03 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 01 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 02 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 45 00 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,0x0(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 07 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 06 fb ff ff ff") << std::endl; //       movl   $0xfffffffb,(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 04 24 00 00 00 00") << std::endl; //    movl   $0x0,(%rsp)
+    std::cout << decoder.decodeInstructionToStr("c7 04 24 ab 00 00 00") << std::endl; //    movl   $0xab,(%rsp)
+    std::cout << decoder.decodeInstructionToStr("c7 04 24 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,(%rsp)
+    std::cout << decoder.decodeInstructionToStr("c7 80 cd 00 00 00 00 00 00 00") << std::endl; //     movl   $0x0,0xcd(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 83 cd 00 00 00 00 00 00 00") << std::endl; //    movl   $0x0,0xcd(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 81 cd 00 00 00 00 00 00 00") << std::endl; //    movl   $0x0,0xcd(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 82 cd 00 00 00 00 00 00 00") << std::endl; //    movl   $0x0,0xcd(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 85 cd 00 00 00 00 00 00 00") << std::endl; //    movl   $0x0,0xcd(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 87 cd 00 00 00 00 00 00 00") << std::endl; //    movl   $0x0,0xcd(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 86 cd 00 00 00 00 00 00 00") << std::endl; //     movl   $0x0,0xcd(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 80 cd 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0xcd(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 83 cd 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0xcd(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 81 cd 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0xcd(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 82 cd 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0xcd(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 85 cd 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0xcd(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 87 cd 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0xcd(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 86 cd 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0xcd(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 80 cd 00 00 00 fb ff ff ff") << std::endl; //   movl   $0xfffffffb,0xcd(%rax)
+    std::cout << decoder.decodeInstructionToStr("c7 83 cd 00 00 00 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,0xcd(%rbx)
+    std::cout << decoder.decodeInstructionToStr("c7 81 cd 00 00 00 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,0xcd(%rcx)
+    std::cout << decoder.decodeInstructionToStr("c7 82 cd 00 00 00 fb ff ff ff") << std::endl; //   movl   $0xfffffffb,0xcd(%rdx)
+    std::cout << decoder.decodeInstructionToStr("c7 85 cd 00 00 00 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,0xcd(%rbp)
+    std::cout << decoder.decodeInstructionToStr("c7 87 cd 00 00 00 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,0xcd(%rdi)
+    std::cout << decoder.decodeInstructionToStr("c7 86 cd 00 00 00 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,0xcd(%rsi)
+    std::cout << decoder.decodeInstructionToStr("c7 84 24 cd 00 00 00 00 00 00 00") << std::endl; //    movl   $0x0,0xcd(%rsp)
+    std::cout << decoder.decodeInstructionToStr("c7 84 24 cd 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0xcd(%rsp)
+    std::cout << decoder.decodeInstructionToStr("c7 84 24 cd 00 00 00 fb ff ff ff") << std::endl; //    movl   $0xfffffffb,0xcd(%rsp)
+
+    std::cout << decoder.decodeInstructionToStr("c7 05 00 00 00 00 00 00 00 00") << std::endl; //    movl   $0x0,0x0(%rip)        # 400960 <main+0x4e0>
+    std::cout << decoder.decodeInstructionToStr("c7 05 00 00 00 00 ab 00 00 00") << std::endl; //    movl   $0xab,0x0(%rip)        # 40096a <main+0x4ea>
+    std::cout << decoder.decodeInstructionToStr("c7 05 00 00 00 00 fb ff ff ff") << std::endl; //   movl   $0xfffffffb,0x0(%rip)        # 400974 <main+0x4f4>
+    std::cout << decoder.decodeInstructionToStr("c7 05 00 00 00 00 00 00 00 00") << std::endl; //   movl   $0x0,0x0(%rip)        # 40097e <main+0x4fe>
+    std::cout << decoder.decodeInstructionToStr("c7 05 00 00 00 00 ab 00 00 00") << std::endl; //   movl   $0xab,0x0(%rip)        # 400988 <main+0x508>
+    std::cout << decoder.decodeInstructionToStr("c7 05 00 00 00 00 fb ff ff ff") << std::endl; //   movl   $0xfffffffb,0x0(%rip)        # 400992 <main+0x512>
+    std::cout << decoder.decodeInstructionToStr("c7 05 cd 00 00 00 00 00 00 00") << std::endl; //   movl   $0x0,0xcd(%rip)        # 400a69 <main+0x5e9>
+    std::cout << decoder.decodeInstructionToStr("c7 05 cd 00 00 00 ab 00 00 00") << std::endl; //   movl   $0xab,0xcd(%rip)        # 400a73 <main+0x5f3>
+    std::cout << decoder.decodeInstructionToStr("c7 05 cd 00 00 00 fb ff ff ff") << std::endl; //   movl   $0xfffffffb,0xcd(%rip)        # 400a7d <main+0x5fd>
+
 
     return 0;
 }

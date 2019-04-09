@@ -74,7 +74,7 @@ namespace InstructionDecoding
             if (!operandB.representation.empty()) {
                 str += ", " + operandB.representation;
             }
-            return str;
+            return str;// + ", len = " + std::to_string(length);
         }
 
         friend std::ostream& operator<<(std::ostream& os, const Instruction& instruction);
@@ -513,6 +513,64 @@ namespace InstructionDecoding
                     break;
                 }
 
+                    // MOV reg/mem64, imm32
+                case 0xc7: {
+                    decoded.mnemonic = "mov";
+                    ModRM modRM = parseModRM(*(opcode + 1));
+                    instructionLength += 1;
+
+                    int32_t immediate;
+                    if (modRM.mod == 0b11) { // imm32 and register
+                        immediate = parse4ByteImmediate(opcode + 2);
+                        decoded.operandB = getRegister(modRM.rm);
+                        instructionLength += 4;
+                    } else if(modRM.mod == 0b00 && modRM.rm == 0b101) { // rip
+                        immediate = parse4ByteImmediate(opcode + 6);
+                        auto offset = parse4ByteImmediate(opcode + 2);
+                        decoded.operandB = { int32ToHex(offset) + "(%rip)", 0, false };
+                        instructionLength += 8;
+                    } else if (modRM.rm == 0b101) { // rbp
+                        if (modRM.mod == 0b01) { // 1 byte offset
+                            immediate = parse4ByteImmediate(opcode + 3);
+                            auto offset = parseByteImmediate(opcode + 2);
+                            decoded.operandB = { int8ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            instructionLength += 5;
+                        } else { // 0b10 4 byte offset
+                            immediate = parse4ByteImmediate(opcode + 6);
+                            auto offset = parse4ByteImmediate(opcode + 2);
+                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            instructionLength += 8;
+                        }
+                    } else if (modRM.rm == 0b100) { // rsp has also SIB
+                        instructionLength += 1;
+                        SIB sib = parseSIB(*(opcode + 2));
+                        if (modRM.mod == 0b00) {
+                            immediate = parse4ByteImmediate(opcode + 3);
+                            decoded.operandB = { "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            instructionLength += 4;
+                        } else { // 0b10
+                            immediate = parse4ByteImmediate(opcode + 7);
+                            auto offset = parse4ByteImmediate(opcode + 3);
+                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            instructionLength += 8;
+                        }
+                    } else {
+                        if (modRM.mod == 0b00) { // register as memory without offset
+                            immediate = parse4ByteImmediate(opcode + 2);
+                            decoded.operandB = { "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            instructionLength += 4;
+                        } else { // with offset
+                            immediate = parse4ByteImmediate(opcode + 6);
+                            auto offset = parse4ByteImmediate(opcode + 2);
+                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            instructionLength += 8;
+                        }
+                    }
+                    decoded.operandA = { "$" + int32ToHex(immediate), immediate, false };
+
+                    break;
+                }
+
                     // mov reg/mem64, reg64
                 case 0x89:
                     // mov reg64, reg/mem64
@@ -534,18 +592,22 @@ namespace InstructionDecoding
                             int32_t offset = parse4ByteImmediate(opcode + 2); // rip has always 4 byte offset?
                             memOperand = {int32ToHex(offset) + "(%rip)", offset, false};
                             instructionLength += 4;
-                        } else if (modRM.mod != 0b00 && modRM.rm == 0b100) { // rsp uses also SIB byte
-                            instructionLength += 1;
-                            if (modRM.mod == 0b01) { // 1 byte offset
+                        } else if (modRM.rm == 0b100) { // rsp uses also SIB byte
+                            if (modRM.mod == 0b11) { // no SIB, no offset
+                                memOperand = { '(' + getRegisterName(modRM.rm) + ')', 0, false };
+                            } else if (modRM.mod == 0b00) { // SIB, no offset
+                                memOperand = { '(' + getRegisterName(modRM.rm) + ')', 0, false };
+                                instructionLength += 1;
+                            } else if (modRM.mod == 0b01) { // SIB, 1 byte offset
                                 auto sib = parseSIB(*(opcode + 2)); // maybe only modRM.rm is enough
                                 auto offset = parseByteImmediate(opcode + 3);
                                 memOperand = { int8ToHex(offset) + '(' + getRegisterName(sib.base) + ')', offset, false };
-                                instructionLength += 1;
-                            } else { // 0b10, 4 byte offset
+                                instructionLength += 2;
+                            } else { // 0b10, SIB, 4 byte offset
                                 auto sib = parseSIB(*(opcode + 2)); // maybe only modRM.rm is enough
                                 auto offset = parse4ByteImmediate(opcode + 3);
                                 memOperand = { int32ToHex(offset) + '(' + getRegisterName(sib.base) + ')', offset, false };
-                                instructionLength += 4;
+                                instructionLength += 5;
                             }
                         } else if (modRM.mod == 0b01) { // other registers with 1 byte offset
                             auto offset = parseByteImmediate(opcode + 2);
