@@ -409,7 +409,7 @@ namespace InstructionDecoding
                 case 0xe8: {
                     decoded.mnemonic = "call";
                     int32_t value = parse4ByteImmediate(opcode + 1);
-                    decoded.operandA = { int32ToHex(value), value, false };
+                    decoded.operandA = { int32ToHex(value) + "(%rip)", value, false };
                     instructionLength += 4;
                     break;
                 }
