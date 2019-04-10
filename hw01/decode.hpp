@@ -527,18 +527,18 @@ namespace InstructionDecoding
                     } else if(modRM.mod == 0b00 && modRM.rm == 0b101) { // rip
                         immediate = parse4ByteImmediate(opcode + 6);
                         auto offset = parse4ByteImmediate(opcode + 2);
-                        decoded.operandB = { int32ToHex(offset) + "(%rip)", 0, false };
+                        decoded.operandB = { int32ToHex(offset) + "(%rip)", offset, false };
                         instructionLength += 8;
                     } else if (modRM.rm == 0b101) { // rbp
                         if (modRM.mod == 0b01) { // 1 byte offset
                             immediate = parse4ByteImmediate(opcode + 3);
                             auto offset = parseByteImmediate(opcode + 2);
-                            decoded.operandB = { int8ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            decoded.operandB = { int8ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", offset, false };
                             instructionLength += 5;
                         } else { // 0b10 4 byte offset
                             immediate = parse4ByteImmediate(opcode + 6);
                             auto offset = parse4ByteImmediate(opcode + 2);
-                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", offset, false };
                             instructionLength += 8;
                         }
                     } else if (modRM.rm == 0b100) { // rsp has also SIB
@@ -551,7 +551,7 @@ namespace InstructionDecoding
                         } else { // 0b10
                             immediate = parse4ByteImmediate(opcode + 7);
                             auto offset = parse4ByteImmediate(opcode + 3);
-                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", offset, false };
                             instructionLength += 8;
                         }
                     } else {
@@ -562,7 +562,7 @@ namespace InstructionDecoding
                         } else { // with offset
                             immediate = parse4ByteImmediate(opcode + 6);
                             auto offset = parse4ByteImmediate(opcode + 2);
-                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", 0, false };
+                            decoded.operandB = { int32ToHex(offset) + "(" + getRegisterName(modRM.rm) + ")", offset, false };
                             instructionLength += 8;
                         }
                     }
