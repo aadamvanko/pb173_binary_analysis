@@ -39,7 +39,7 @@ namespace
         */
 
         bool isControlFlowInstruction(const Instruction &instruction) const {
-            const std::set<string> mnemonics = { "jmp", "je", "jb", "jne" };
+            const std::set<string> mnemonics = { "jmp", "je", "jb", "jne", "call" };
             return mnemonics.find(instruction.mnemonic) != mnemonics.end();
         }
 
