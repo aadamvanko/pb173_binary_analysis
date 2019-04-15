@@ -36,6 +36,7 @@ decode
 cfg
 decode.elf
 cfg.elf
+symtab
 hw2
 hw3
 hw4

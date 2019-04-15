@@ -15,3 +15,6 @@ decode.elf:
 	
 cfg.elf:
 	$(CXX) $(CXXFLAGS) -o cfg.elf hw03/cfg-elf/main.cpp
+
+symtab:
+	$(CXX) $(CXXFLAGS) -o symtab hw04/main.cpp
