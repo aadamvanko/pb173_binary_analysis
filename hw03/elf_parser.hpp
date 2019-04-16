@@ -287,14 +287,6 @@ namespace ELFParsing {
                     char type = (ELF64_ST_BIND(symbol->st_info) == STB_LOCAL ? 't' : 'T');
                     symbols.push_back( { symbolName, type, symbol->st_value } );
                 }
-/*
-                DEBUG(&strtabSection.bytes[symbol->st_name]);
-                DEBUG(symbol->st_info);
-                DEBUG(symbol->st_other);
-                DEBUG(symbol->st_shndx);
-                DEBUG(symbol->st_value);
-                DEBUG(symbol->st_size);
-*/
                 symbol++;
             }
 
