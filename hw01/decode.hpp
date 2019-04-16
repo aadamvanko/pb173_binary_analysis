@@ -8,6 +8,7 @@
 #include <cassert>
 #include <unordered_map>
 #include <map>
+#include <iomanip>
 
 namespace InstructionDecoding
 {
@@ -84,6 +85,34 @@ namespace InstructionDecoding
     std::ostream& operator<<(std::ostream& os, const Instruction& instruction)
     {
         os << instruction.toStr();
+        return os;
+    }
+
+    using AddressType = uint64_t;
+
+    struct AddressableInstruction {
+        Instruction ins;
+        AddressType address = -1;
+        std::string comment;
+
+        std::string toStrWithoutAddress() {
+            std::string result = ins.toStr();
+            if (!comment.empty()) {
+                result += " # " + comment;
+            }
+            return result;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const AddressableInstruction& instruction);
+    };
+
+
+    std::ostream& operator<<(std::ostream& os, const AddressableInstruction& instruction)
+    {
+        os << std::setw(16) << std::hex << instruction.address << ":   " << instruction.ins.toStr();
+        if (!instruction.comment.empty()) {
+            os << " # " << instruction.comment;
+        }
         return os;
     }
 
@@ -685,6 +714,19 @@ namespace InstructionDecoding
 
         vector<Instruction> decodeInstructions(const string& concatenatedBytes) {
             return decodeInstructions(toBytes(concatenatedBytes));
+        }
+
+        // with addresses
+        vector<AddressableInstruction> generateAddressableInstructions(const vector<Instruction>& instructions) {
+            using AddressType = uint64_t;
+            AddressType offset = 0;
+            vector<AddressableInstruction> addressableInstructions;
+            for (const auto& instruction : instructions) {
+                AddressableInstruction addressableInstruction{ instruction, offset };
+                addressableInstructions.push_back(addressableInstruction);
+                offset += instruction.length;
+            }
+            return addressableInstructions;
         }
 
     };
