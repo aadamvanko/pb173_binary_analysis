@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <array>
 #include <vector>
+#include <algorithm>
 
 #include "../hw01/decode.hpp"
 
@@ -20,28 +21,14 @@ namespace ELFParsing {
 
     using InstructionDecoding::Decoder;
     using InstructionDecoding::Instruction;
+    using InstructionDecoding::AddressableInstruction;
+    using InstructionDecoding::AddressType;
 
     using std::string;
     using std::cout;
     using std::cerr;
     using std::endl;
     using std::vector;
-
-    using AddressType = uint64_t;
-
-    struct AddressableInstruction {
-        Instruction ins;
-        AddressType address = -1;
-
-        friend std::ostream& operator<<(std::ostream& os, const AddressableInstruction& instruction);
-    };
-
-
-    std::ostream& operator<<(std::ostream& os, const AddressableInstruction& instruction)
-    {
-        os << std::setw(16) << std::hex << instruction.address << ":   " << instruction.ins.toStr();
-        return os;
-    }
 
     struct Section {
         string name;
@@ -50,11 +37,56 @@ namespace ELFParsing {
         vector<uint8_t> bytes;
     };
 
+    struct Symbol {
+        string name;
+        char type;
+        AddressType address;
+
+        friend std::ostream& operator<<(std::ostream& os, const Symbol& symbol);
+    };
+
+    std::ostream& operator<<(std::ostream& os, const Symbol& symbol)
+    {
+        os << std::setfill('0') << std::setw(16) << std::hex << symbol.address << " " << symbol.type << " " << symbol.name;
+        return os;
+    }
+
     class ELFParser {
     private:
         string filename_;
 
-        bool isELFFile(const void* fileBytes) {
+        static bool IsELFFile(const string& filename) {
+            int fd = open(filename.c_str(), O_RDONLY);
+            if (fd == -1) {
+                cerr << "Cannot open " << filename << endl;
+                return false;
+            }
+
+            struct stat fileInfo;
+            if (fstat(fd, &fileInfo) == -1) {
+                cerr << "Cannot get size of file " << filename << endl;
+                close(fd);
+                return false;
+            }
+
+            void * const fileBytes = mmap(NULL, fileInfo.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+            if (fileBytes == MAP_FAILED) {
+                cerr << "mmap failed" << endl;
+                close(fd);
+                return false;
+            }
+
+            if (!isELFFile(fileBytes)) {
+                // cerr << "File " << filename << " is not ELF format" << endl;
+                close(fd);
+                return false;
+            }
+
+            close(fd);
+            return true;
+        }
+
+        static bool isELFFile(const void* fileBytes) {
             const uint8_t* bytes = static_cast<const uint8_t*>(fileBytes);
             std::array<uint8_t, 4> ELFMagicNumber = { 0x7f, 0x45, 0x4c, 0x46 };
             for (size_t offset = 0; offset < ELFMagicNumber.size(); offset++) {
@@ -88,7 +120,7 @@ namespace ELFParsing {
             }
 
             if (!isELFFile(fileBytes)) {
-                cout << "File " << filename_ << " is not ELF format" << endl;
+                cerr << "File " << filename_ << " is not ELF format" << endl;
                 close(fd);
                 return {};
             }
@@ -127,6 +159,7 @@ namespace ELFParsing {
                 section.endAddress = sectionHeader->sh_addr + sectionHeader->sh_size;
                 section.bytes = vector<uint8_t>(bytes, bytes + sectionHeader->sh_size);
                 sections.push_back(section);
+
 /*
                 DEBUG(i);
                 DEBUG(sectionHeader->sh_entsize);
@@ -135,6 +168,7 @@ namespace ELFParsing {
                 DEBUG(sectionHeader->sh_offset);
                 DEBUG(sectionHeader->sh_addr);
                 DEBUG(sectionNameStr);
+                printf("section bytes address = %p\n", bytes);
 
                 if (section.name == ".text") {
                     cout << ".text section found" << endl;
@@ -160,12 +194,53 @@ namespace ELFParsing {
             return sections;
         }
 
+        bool isMovWithRIP(const AddressableInstruction& addrIns) {
+            return addrIns.ins.mnemonic == "mov" &&
+                    (addrIns.ins.operandA.representation.find("(%rip)") != string::npos ||
+                     addrIns.ins.operandB.representation.find("(%rip)") != string::npos);
+        }
+
+        AddressType getRIPOffset(const AddressableInstruction& addrIns) {
+            if (addrIns.ins.operandA.representation.find("(%rip)")) {
+                return addrIns.ins.operandA.value;
+            }
+            if (addrIns.ins.operandB.representation.find("(%rip)")) {
+                return addrIns.ins.operandB.value;
+            }
+            return -1;
+        }
+
+        string generateDestinationAddressComment(const AddressableInstruction& addrIns, const vector<Section>& sections) {
+            AddressType destAddress = addrIns.address + getRIPOffset(addrIns);
+            for (const auto& section : sections) {
+                /*
+                if (section.name == ".text") {
+                    DEBUG(section.name);
+                    DEBUG(section.startAddress);
+                    DEBUG(section.endAddress);
+                }
+                */
+                if (section.startAddress <= destAddress && destAddress < section.endAddress) {
+                    return section.name + " + " + std::to_string(destAddress - section.startAddress);
+                }
+            }
+            return "unkown section + ...";
+        }
+
+        Section getSection(const vector<Section>& sections, const string& sectionName) {
+            for (const auto& section : sections) {
+                if (section.name == sectionName) {
+                    return section;
+                }
+            }
+            throw std::logic_error("Section with given name not found");
+        }
+
     public:
         ELFParser(string filename) : filename_(filename) {}
 
         vector<AddressableInstruction> decodeTextSection() {
             const auto sections = getSections();
-            vector<AddressableInstruction> addressableInstructions;
             for (const auto& section : sections) {
                 if (section.name != ".text") {
                     continue;
@@ -173,14 +248,60 @@ namespace ELFParsing {
 
                 Decoder decoder;
                 const auto instructions = decoder.decodeInstructions(section.bytes);
-                AddressType offset = 0;
-                for (const auto& instruction : instructions) {
-                    AddressableInstruction addressableInstruction{ instruction, section.startAddress + offset };
-                    addressableInstructions.push_back(addressableInstruction);
-                    offset += instruction.length;
+                const auto addressableInstructions = decoder.generateAddressableInstructions(instructions);
+                vector<AddressableInstruction> instructionsWithDestination;
+
+                for (const auto& addressableInstruction : addressableInstructions) {
+                    AddressableInstruction instructionWithDestination = addressableInstruction;
+                    instructionWithDestination.address += section.startAddress;
+                    if (isMovWithRIP(addressableInstruction)) {
+                        string destAddressComment = generateDestinationAddressComment(addressableInstruction, sections);
+                        instructionWithDestination.comment = destAddressComment;
+                    }
+                    instructionsWithDestination.push_back(instructionWithDestination);
                 }
+
+                return instructionsWithDestination;
             }
-            return addressableInstructions;
+
+            cerr << "Section .text was not found in given ELF file" << endl;
+            return {};
+        }
+
+        vector<Symbol> getFunctionSymbols() {
+            auto sections = getSections();
+            auto strtabSection = getSection(sections, ".strtab");
+            auto symtabSection = getSection(sections, ".symtab");
+
+            vector<Symbol> symbols;
+            Elf64_Sym* symbol = (Elf64_Sym*)&symtabSection.bytes[0];
+            while (symbol < (Elf64_Sym*)&symtabSection.bytes[symtabSection.bytes.size() - 1]) {
+                if (ELF64_ST_TYPE(symbol->st_info) != STT_FUNC) {
+                    symbol++;
+                    continue;
+                }
+
+                const char* symbolNameStr = (const char*)&strtabSection.bytes[symbol->st_name];
+                string symbolName = symbolNameStr;
+                if (symbolName != "") {
+                    char type = (ELF64_ST_BIND(symbol->st_info) == STB_LOCAL ? 't' : 'T');
+                    symbols.push_back( { symbolName, type, symbol->st_value } );
+                }
+/*
+                DEBUG(&strtabSection.bytes[symbol->st_name]);
+                DEBUG(symbol->st_info);
+                DEBUG(symbol->st_other);
+                DEBUG(symbol->st_shndx);
+                DEBUG(symbol->st_value);
+                DEBUG(symbol->st_size);
+*/
+                symbol++;
+            }
+
+            std::sort(symbols.begin(), symbols.end(),
+                 [](const Symbol& lhs, const Symbol& rhs) { return lhs.address < rhs.address; });
+
+            return symbols;
         }
     };
 

@@ -1,4 +1,4 @@
-#include "elf_parser.hpp"
+#include "../hw03/elf_parser.hpp"
 
 using std::cout;
 using std::cerr;
@@ -13,7 +13,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    //ELFParser parser("/home/adam/temp/a.out");
     ELFParser parser(argv[1]);
     auto symbols = parser.getFunctionSymbols();
     for (const auto& symbol : symbols) {

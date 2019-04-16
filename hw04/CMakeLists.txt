@@ -3,4 +3,4 @@ project(symtab)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(symtab main.cpp elf_parser.hpp)
+add_executable(symtab main.cpp ../hw03/elf_parser.hpp)
