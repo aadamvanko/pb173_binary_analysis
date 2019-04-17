@@ -55,38 +55,7 @@ namespace ELFParsing {
     private:
         string filename_;
 
-        static bool IsELFFile(const string& filename) {
-            int fd = open(filename.c_str(), O_RDONLY);
-            if (fd == -1) {
-                cerr << "Cannot open " << filename << endl;
-                return false;
-            }
-
-            struct stat fileInfo;
-            if (fstat(fd, &fileInfo) == -1) {
-                cerr << "Cannot get size of file " << filename << endl;
-                close(fd);
-                return false;
-            }
-
-            void * const fileBytes = mmap(NULL, fileInfo.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-            if (fileBytes == MAP_FAILED) {
-                cerr << "mmap failed" << endl;
-                close(fd);
-                return false;
-            }
-
-            if (!isELFFile(fileBytes)) {
-                // cerr << "File " << filename << " is not ELF format" << endl;
-                close(fd);
-                return false;
-            }
-
-            close(fd);
-            return true;
-        }
-
-        static bool isELFFile(const void* fileBytes) {
+        static bool IsELFFile(const void* fileBytes) {
             const uint8_t* bytes = static_cast<const uint8_t*>(fileBytes);
             std::array<uint8_t, 4> ELFMagicNumber = { 0x7f, 0x45, 0x4c, 0x46 };
             for (size_t offset = 0; offset < ELFMagicNumber.size(); offset++) {
@@ -119,7 +88,7 @@ namespace ELFParsing {
                 return {};
             }
 
-            if (!isELFFile(fileBytes)) {
+            if (!IsELFFile(fileBytes)) {
                 cerr << "File " << filename_ << " is not ELF format" << endl;
                 close(fd);
                 return {};
@@ -201,17 +170,18 @@ namespace ELFParsing {
         }
 
         AddressType getRIPOffset(const AddressableInstruction& addrIns) {
-            if (addrIns.ins.operandA.representation.find("(%rip)")) {
+            if (addrIns.ins.operandA.representation.find("(%rip)") != string::npos) {
                 return addrIns.ins.operandA.value;
             }
-            if (addrIns.ins.operandB.representation.find("(%rip)")) {
+            if (addrIns.ins.operandB.representation.find("(%rip)") != string::npos) {
                 return addrIns.ins.operandB.value;
             }
             return -1;
         }
 
         string generateDestinationAddressComment(const AddressableInstruction& addrIns, const vector<Section>& sections) {
-            AddressType destAddress = addrIns.address + getRIPOffset(addrIns);
+            int64_t offset = getRIPOffset(addrIns);
+            AddressType destAddress = addrIns.address + offset;
             for (const auto& section : sections) {
                 /*
                 if (section.name == ".text") {
@@ -239,6 +209,37 @@ namespace ELFParsing {
     public:
         ELFParser(string filename) : filename_(filename) {}
 
+        static bool IsELFFile(const string& filename) {
+            int fd = open(filename.c_str(), O_RDONLY);
+            if (fd == -1) {
+                cerr << "Cannot open " << filename << endl;
+                return false;
+            }
+
+            struct stat fileInfo;
+            if (fstat(fd, &fileInfo) == -1) {
+                cerr << "Cannot get size of file " << filename << endl;
+                close(fd);
+                return false;
+            }
+
+            void * const fileBytes = mmap(NULL, fileInfo.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+            if (fileBytes == MAP_FAILED) {
+                cerr << "mmap failed" << endl;
+                close(fd);
+                return false;
+            }
+
+            if (!IsELFFile(fileBytes)) {
+                // cerr << "File " << filename << " is not ELF format" << endl;
+                close(fd);
+                return false;
+            }
+
+            close(fd);
+            return true;
+        }
+
         vector<AddressableInstruction> decodeTextSection() {
             const auto sections = getSections();
             for (const auto& section : sections) {
@@ -255,7 +256,7 @@ namespace ELFParsing {
                     AddressableInstruction instructionWithDestination = addressableInstruction;
                     instructionWithDestination.address += section.startAddress;
                     if (isMovWithRIP(addressableInstruction)) {
-                        string destAddressComment = generateDestinationAddressComment(addressableInstruction, sections);
+                        string destAddressComment = generateDestinationAddressComment(instructionWithDestination, sections);
                         instructionWithDestination.comment = destAddressComment;
                     }
                     instructionsWithDestination.push_back(instructionWithDestination);
