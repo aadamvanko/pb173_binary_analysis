@@ -1,46 +1,41 @@
-	.text
-	.file	"test_binary.c"
-	.globl	funA                    # -- Begin function funA
-	.p2align	4, 0x90
-	.type	funA,@function
 funA:                                   # @funA
-	.cfi_startproc
-# %bb.0:
 	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
-	movl	$123, -4(%rbp)
+	movl	$123, +2(%rip)
+	jmp	nop_label
+	nop
+	callq funA
+nop_label:
+	nop
 	movl	-4(%rbp), %eax
-	addl	$12, %eax
+jb_label:
+	jb	je_label
+	nop
+	nop
+je_label:
+	je	jb_label
+	jne	pop_label
+	nop
+	nop
+	nop
+	nop
+	nop
+pop_label:
 	popq	%rbp
+	callq	some_function
 	retq
-.Lfunc_end0:
-	.size	funA, .Lfunc_end0-funA
-	.cfi_endproc
-                                        # -- End function
-	.globl	main                    # -- Begin function main
-	.p2align	4, 0x90
-	.type	main,@function
-main:                                   # @main
-	.cfi_startproc
-# %bb.0:
+some_function:
 	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
-	xorl	%eax, %eax
-	movl	$0x13, -20(%rip)
+	pop	%rbp
+	retq
+main:                                   # @main
+	pushq	%rbp
+	movq	%rsp, %rbp
+	movl	$0x777, -1(%rip)
 	movl	$0, -4(%rbp)
-	movl	$0x5, 4(%rip)
+	callq	funA
+	movl	%eax, -8(%rbp)
+	movl	%ecx, %eax
 	popq	%rbp
 	retq
-.Lfunc_end1:
-	.size	main, .Lfunc_end1-main
-	.cfi_endproc
-                                        # -- End function
-
-	.ident	"clang version 6.0.0-1ubuntu2 (tags/RELEASE_600/final)"
-	.section	".note.GNU-stack","",@progbits

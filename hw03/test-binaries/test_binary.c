@@ -4,5 +4,6 @@ int funA() {
 }
 
 int main(void) {
+    int res = funA();
     return 0;
 }

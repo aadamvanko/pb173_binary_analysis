@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include <cassert>
+#include <set>
 #include <unordered_map>
 #include <map>
 #include <iomanip>
@@ -93,9 +94,10 @@ namespace InstructionDecoding
     struct AddressableInstruction {
         Instruction ins;
         AddressType address = -1;
+        AddressType destination = -1;
         std::string comment;
 
-        std::string toStrWithoutAddress() {
+        std::string toStrWithoutAddress() const {
             std::string result = ins.toStr();
             if (!comment.empty()) {
                 result += " # " + comment;
@@ -670,6 +672,16 @@ namespace InstructionDecoding
         }
 
     public:
+        // helpers
+        static bool IsControlFlowInstruction(const Instruction &instruction) {
+            const std::set<string> mnemonics = { "jmp", "je", "jb", "jne", "call" };
+            return mnemonics.find(instruction.mnemonic) != mnemonics.end();
+        }
+
+        static AddressType CalculateDestinationAddress(const AddressType address, const int length, const int64_t offset) {
+            return address + length + offset;
+        }
+
         // Instruction variants
         Instruction decodeInstruction(const vector<uint8_t>& bytes) {
             return decodeBytes(&bytes[0]);
@@ -719,12 +731,18 @@ namespace InstructionDecoding
         // with addresses
         vector<AddressableInstruction> generateAddressableInstructions(const vector<Instruction>& instructions) {
             using AddressType = uint64_t;
-            AddressType offset = 0;
+            AddressType address = 0;
             vector<AddressableInstruction> addressableInstructions;
             for (const auto& instruction : instructions) {
-                AddressableInstruction addressableInstruction{ instruction, offset };
+                AddressableInstruction addressableInstruction;
+                addressableInstruction.address = address;
+                addressableInstruction.ins = instruction;
+                if (IsControlFlowInstruction(instruction)) {
+                    int64_t offset = instruction.operandA.value;
+                    addressableInstruction.destination = CalculateDestinationAddress(address, instruction.length, offset);
+                }
                 addressableInstructions.push_back(addressableInstruction);
-                offset += instruction.length;
+                address += instruction.length;
             }
             return addressableInstructions;
         }

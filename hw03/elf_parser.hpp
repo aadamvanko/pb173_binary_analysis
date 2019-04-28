@@ -179,9 +179,7 @@ namespace ELFParsing {
             return -1;
         }
 
-        string generateDestinationAddressComment(const AddressableInstruction& addrIns, const vector<Section>& sections) {
-            int64_t offset = getRIPOffset(addrIns);
-            AddressType destAddress = addrIns.address + offset;
+        string generateDestinationAddressComment(const AddressType destination, const vector<Section>& sections) {
             for (const auto& section : sections) {
                 /*
                 if (section.name == ".text") {
@@ -190,8 +188,8 @@ namespace ELFParsing {
                     DEBUG(section.endAddress);
                 }
                 */
-                if (section.startAddress <= destAddress && destAddress < section.endAddress) {
-                    return section.name + " + " + std::to_string(destAddress - section.startAddress);
+                if (section.startAddress <= destination && destination < section.endAddress) {
+                    return section.name + " + " + std::to_string(destination - section.startAddress);
                 }
             }
             return "unkown section + ...";
@@ -255,8 +253,21 @@ namespace ELFParsing {
                 for (const auto& addressableInstruction : addressableInstructions) {
                     AddressableInstruction instructionWithDestination = addressableInstruction;
                     instructionWithDestination.address += section.startAddress;
+
+                    if (InstructionDecoding::Decoder::IsControlFlowInstruction(instructionWithDestination.ins)) {
+                        auto destination = InstructionDecoding::Decoder::CalculateDestinationAddress(instructionWithDestination.address,
+                                                                                                     instructionWithDestination.ins.length,
+                                                                                                     instructionWithDestination.ins.operandA.value);
+                        instructionWithDestination.destination = destination;
+                    }
+
                     if (isMovWithRIP(addressableInstruction)) {
-                        string destAddressComment = generateDestinationAddressComment(instructionWithDestination, sections);
+                        int64_t offset = getRIPOffset(instructionWithDestination);
+                        auto destination = InstructionDecoding::Decoder::CalculateDestinationAddress(instructionWithDestination.address,
+                                                                                                     instructionWithDestination.ins.length,
+                                                                                                     offset);
+                        instructionWithDestination.destination = destination;
+                        string destAddressComment = generateDestinationAddressComment(instructionWithDestination.destination, sections);
                         instructionWithDestination.comment = destAddressComment;
                     }
                     instructionsWithDestination.push_back(instructionWithDestination);
