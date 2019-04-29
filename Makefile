@@ -18,3 +18,6 @@ cfg.elf:
 
 symtab:
 	$(CXX) $(CXXFLAGS) -o symtab hw04/main.cpp
+
+recfun:
+	$(CXX) $(CXXFLAGS) -o recfun hw05/main.cpp

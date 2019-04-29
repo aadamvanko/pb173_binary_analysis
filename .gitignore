@@ -37,6 +37,7 @@ cfg
 decode.elf
 cfg.elf
 symtab
+recfun
 hw2
 hw3
 hw4
