@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     using std::endl;
     using std::cin;
 
-    InstructionDecoding::Decoder decoder;/*
+    InstructionDecoding::Decoder decoder;
     std::vector<Instruction> instructions;
     if (argc > 1) {
         instructions = decoder.decodeInstructions(std::vector<const char*>(argv + 1, argv + argc));
@@ -34,13 +34,13 @@ int main(int argc, char* argv[]) {
     for (const auto& instruction : instructions) {
         cout << instruction << endl;
     }
-
+/*
     for (InstructionDecoding::Instruction instruction : InstructionDecoding::Decoder().decodeInstructions(std::vector<const char*>(argv + 1, argv + argc))) {
         std::cout << instruction.toStr() << std::endl;
     }
 
     std::cout << "----------------------------------------------------";
-*/
+
     // xor
     std::cout << decoder.decodeInstructionToStr("35 ab cf 00 00") << std::endl;
     std::cout << decoder.decodeInstructionToStr("48 35 ab cf 00 00") << std::endl;
@@ -417,7 +417,7 @@ int main(int argc, char* argv[]) {
     std::cout << decoder.decodeInstructionToStr("c7 05 cd 00 00 00 00 00 00 00") << std::endl; //   movl   $0x0,0xcd(%rip)        # 400a69 <main+0x5e9>
     std::cout << decoder.decodeInstructionToStr("c7 05 cd 00 00 00 ab 00 00 00") << std::endl; //   movl   $0xab,0xcd(%rip)        # 400a73 <main+0x5f3>
     std::cout << decoder.decodeInstructionToStr("c7 05 cd 00 00 00 fb ff ff ff") << std::endl; //   movl   $0xfffffffb,0xcd(%rip)        # 400a7d <main+0x5fd>
-
+*/
 
     return 0;
 }
