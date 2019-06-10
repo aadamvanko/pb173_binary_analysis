@@ -42,7 +42,7 @@ namespace
 
         bool isControlFlowInstruction(const AddressableInstruction &instruction) const {
             const std::set<string> mnemonics = { "jmp", "je", "jb", "jne", "call" };
-            return mnemonics.find(instruction.ins.mnemonic) != mnemonics.end();
+            return mnemonics.find(instruction.ins.mnemonic) != mnemonics.end() && instruction.valid;
         }
 
         unordered_map<AddressType, bool> findSplitPoints(const vector<Instruction> &instructions) const {
@@ -68,37 +68,7 @@ namespace
             }
             return splitPoints;
         }
-/*
-        int calculateInstructionIndex(const vector<AddressableInstruction>& instructions, const AddressType from, int64_t offset) const {
-            AddressType index = from;
-            if (offset < 0) {
-                offset += instructions[index].ins.length;
-                while (index > 0 && offset < 0) {
-                    index--;
-                    if (labs(offset) < instructions[index].ins.length) {
-                        // destination is inside instruction !
-                    }
-                    offset += instructions[index].ins.length;
-                }
-                if (offset < 0 && index == 0) {
-                    // destination is outside of instruction addresses range
-                }
-            } else {
-                while (index < instructions.size() - 1 && offset > 0) {
-                    index++;
-                    if (offset < instructions[index].ins.length) {
-                        // destination is inside instruction !
-                    }
-                    offset -= instructions[index].ins.length;
-                }
-                if (offset > 0 && index == instructions.size() - 1) {
-                    // destination is outside of instruction addresses range
-                }
-                index++;
-            }
-            return index;
-        }
-*/
+
         map<AddressType, BasicBlock> createBasicBlocks(const vector<Instruction>& instructions, const vector<SplitPoint>& orderedSplitPoints) const {
             map<AddressType, BasicBlock> basicBlocks;
             for (int i = 0; i < orderedSplitPoints.size() - 1; i++) {
@@ -137,6 +107,28 @@ namespace
             return destinationIndexes;
         }
 
+        string createEdge(AddressType from, const Instruction& instruction) const {
+            int destinationAddress = from + instruction.operandA.value;
+            return createEdge(from, destinationAddress, instruction.toStr() + " # label_" + to_string(destinationAddress));
+        }
+
+        string toHex(AddressType address) const {
+            std::ostringstream os;
+            os << std::hex << address;
+            return os.str();
+        }
+
+        string wrappedHex(AddressType address) const {
+            return "\"" + toHex(address) + "\"";
+        }
+
+        string createEdge(AddressType from, AddressType to, const string& edgeLabel) const {
+
+            return wrappedHex(from) + " -> " + wrappedHex(to) + " [ label=\"" + edgeLabel + "\"]\n";
+        }
+
+    public:
+
         map<AddressType, BasicBlockAddressable> createBasicBlocks(const vector<AddressableInstruction>& instructions) const {
             const auto destinationIndexes = findDestinationIndexes(instructions);
             vector<BasicBlockAddressable> blocks;
@@ -173,27 +165,6 @@ namespace
             return basicBlocks;
         }
 
-        string createEdge(AddressType from, const Instruction& instruction) const {
-            int destinationAddress = from + instruction.operandA.value;
-            return createEdge(from, destinationAddress, instruction.toStr() + " # label_" + to_string(destinationAddress));
-        }
-
-        string toHex(AddressType address) const {
-            std::ostringstream os;
-            os << std::hex << address;
-            return os.str();
-        }
-
-        string wrappedHex(AddressType address) const {
-            return "\"" + toHex(address) + "\"";
-        }
-
-        string createEdge(AddressType from, AddressType to, const string& edgeLabel) const {
-
-            return wrappedHex(from) + " -> " + wrappedHex(to) + " [ label=\"" + edgeLabel + "\"]\n";
-        }
-
-    public:
         string generateDotSource(const vector<Instruction>& instructions) const {
             const auto splitPoints = findSplitPoints(instructions);
             auto orderedSplitPoints = vector<SplitPoint>(splitPoints.begin(), splitPoints.end());

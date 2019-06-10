@@ -12,8 +12,10 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <stack>
 
 #include "../hw01/decode.hpp"
+#include "../hw02/cfg.hpp"
 
 namespace ELFParsing {
 
@@ -29,6 +31,8 @@ namespace ELFParsing {
     using std::cerr;
     using std::endl;
     using std::vector;
+    using std::map;
+    using std::stack;
 
     struct Section {
         string name;
@@ -65,7 +69,6 @@ namespace ELFParsing {
             }
             return true;
         }
-
 
         vector<Section> getSections() {
             int fd = open(filename_.c_str(), O_RDONLY);
@@ -238,6 +241,41 @@ namespace ELFParsing {
             return true;
         }
 
+        Elf64_Ehdr getHeader() {
+            int fd = open(filename_.c_str(), O_RDONLY);
+            if (fd == -1) {
+                cerr << "Cannot open " << filename_ << endl;
+                return {};
+            }
+
+            struct stat fileInfo;
+            if (fstat(fd, &fileInfo) == -1) {
+                cerr << "Cannot get size of file " << filename_ << endl;
+                close(fd);
+                return {};
+            }
+
+            void * const fileBytes = mmap(NULL, fileInfo.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+            if (fileBytes == MAP_FAILED) {
+                cerr << "mmap failed" << endl;
+                close(fd);
+                return {};
+            }
+
+            if (!IsELFFile(fileBytes)) {
+                cerr << "File " << filename_ << " is not ELF format" << endl;
+                close(fd);
+                return {};
+            }
+
+            Elf64_Ehdr* ELFHeader = static_cast<Elf64_Ehdr*>(fileBytes);
+            const Elf64_Ehdr ELFHeaderData = *ELFHeader;
+
+            close(fd);
+
+            return ELFHeaderData;
+        }
+
         vector<AddressableInstruction> decodeTextSection() {
             const auto sections = getSections();
             for (const auto& section : sections) {
@@ -287,7 +325,8 @@ namespace ELFParsing {
 
             vector<Symbol> symbols;
             Elf64_Sym* symbol = (Elf64_Sym*)&symtabSection.bytes[0];
-            while (symbol < (Elf64_Sym*)&symtabSection.bytes[symtabSection.bytes.size() - 1]) {
+            const Elf64_Sym* end = (Elf64_Sym*)&symtabSection.bytes[symtabSection.bytes.size() - 1];
+            while (symbol < end) {
                 if (ELF64_ST_TYPE(symbol->st_info) != STT_FUNC) {
                     symbol++;
                     continue;
@@ -306,6 +345,205 @@ namespace ELFParsing {
                  [](const Symbol& lhs, const Symbol& rhs) { return lhs.address < rhs.address; });
 
             return symbols;
+        }
+
+        class RecursiveTextSectionDecoder {
+        private:
+            const AddressType entryPoint_;
+            const vector<Section> sections_;
+            const Elf64_Ehdr header_;
+            const Section textSection_;
+            const InstructionDecoding::Decoder decoder_{};
+
+            map<AddressType, AddressableInstruction> seenInstructions_;
+
+            bool isControlFlowIns(const Instruction& ins) const {
+                const std::set<string> mnemonics = { "jmp", "je", "jb", "jne", "call" };
+                return mnemonics.find(ins.mnemonic) != mnemonics.end();
+            }
+
+            bool isValidAddress(const AddressType address) const {
+                /*
+                if (address < textSection_.startAddress || address >= textSection_.endAddress) {
+                    return false;
+                }
+                */
+                for (const auto pair : seenInstructions_) {
+                    if (address > pair.first && address < pair.first + pair.second.ins.length) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+        public:
+            RecursiveTextSectionDecoder(const Elf64_Ehdr& header, const vector<Section>& sections, const Section& textSection) :
+                entryPoint_(header.e_entry), header_(header), sections_(sections), textSection_(textSection) {
+            }
+
+            void decode() {
+                stack<AddressType> stack;
+                stack.push(entryPoint_);
+
+                while (!stack.empty()) {
+                    auto address = stack.top();
+                    stack.pop();
+
+                    auto it = seenInstructions_.find(address);
+                    if (it != seenInstructions_.end()) {
+                        continue;
+                    }
+
+                    auto ins = decoder_.decodeInstruction(&textSection_.bytes[address - textSection_.startAddress]);
+                    AddressableInstruction addrIns{ ins, address };
+                    seenInstructions_[address] = addrIns;
+
+                    if (ins.mnemonic == "ret") {
+                        continue;
+                    }
+
+                    if (ins.mnemonic != "jmp") {
+                        stack.push(address + ins.length);
+                    }
+
+                    if (isControlFlowIns(ins)) {
+                        auto dest = Decoder::CalculateDestinationAddress(address, ins.length, ins.operandA.value);
+                        if (isValidAddress(dest)) {
+                            stack.push(dest);
+                        } else {
+                            seenInstructions_[address].comment = "[broken]";
+                            seenInstructions_[address].valid = false;
+                        }
+                    }
+                }
+            }
+
+            vector<AddressableInstruction> getInstructions() {
+                vector<AddressableInstruction> instructions;
+                for (const auto pair : seenInstructions_) {
+                    instructions.push_back(pair.second);
+                }
+                sort(instructions.begin(), instructions.end(),
+                     [](const AddressableInstruction& lhs, const AddressableInstruction& rhs) {
+                    return lhs.address < rhs.address;
+                });
+
+                return instructions;
+            }
+        };
+
+        vector<AddressableInstruction> generateInstructionsWithDestination(const vector<Section>& sections, const vector<AddressableInstruction>& instructions) {
+            vector<AddressableInstruction> instructionsWithDestination;
+            for (const auto& addressableInstruction : instructions) {
+                AddressableInstruction instructionWithDestination = addressableInstruction;
+
+                if (InstructionDecoding::Decoder::IsControlFlowInstruction(instructionWithDestination.ins)) {
+                    auto destination = InstructionDecoding::Decoder::CalculateDestinationAddress(instructionWithDestination.address,
+                                                                                                 instructionWithDestination.ins.length,
+                                                                                                 instructionWithDestination.ins.operandA.value);
+                    instructionWithDestination.destination = destination;
+                }
+
+                if (isMovWithRIP(addressableInstruction)) {
+                    int64_t offset = getRIPOffset(instructionWithDestination);
+                    auto destination = InstructionDecoding::Decoder::CalculateDestinationAddress(instructionWithDestination.address,
+                                                                                                 instructionWithDestination.ins.length,
+                                                                                                 offset);
+                    instructionWithDestination.destination = destination;
+                    string destAddressComment = generateDestinationAddressComment(instructionWithDestination.destination, sections);
+                    instructionWithDestination.comment = destAddressComment;
+                }
+                instructionsWithDestination.push_back(instructionWithDestination);
+            }
+            return instructionsWithDestination;
+        }
+
+        vector<BasicBlockAddressable> createOrderedBasicBlocks(const vector<AddressableInstruction>& instructions) {
+            ControlFlowGraph cfg;
+            auto basicBlocks = cfg.createBasicBlocks(instructions);
+
+            vector<BasicBlockAddressable> orderedBlocks;
+            for (const auto basicBlock : basicBlocks) {
+                orderedBlocks.push_back(basicBlock.second);
+            }
+
+            sort(orderedBlocks.begin(), orderedBlocks.end(),
+                 [](const BasicBlockAddressable& lhs, const BasicBlockAddressable& rhs) {
+                return lhs[0].address < rhs[0].address;
+            });
+
+            return orderedBlocks;
+        }
+
+        std::map<AddressType, string> createSymbolsDictionary(const vector<Symbol>& symbols) {
+            std::map<AddressType, string> dictionary;
+            for (const auto& symbol : symbols) {
+                dictionary[symbol.address] = symbol.name;
+            }
+            return dictionary;
+        }
+
+        bool isControlFlowIns(const Instruction& ins) const {
+            const std::set<string> mnemonics = { "jmp", "je", "jb", "jne", "call" };
+            return mnemonics.find(ins.mnemonic) != mnemonics.end();
+        }
+
+        using Destination = std::pair<string, AddressType>;
+
+        std::map<AddressType, string> getDestinations(const vector<AddressableInstruction>& instructionsWithDestinations) {
+            std::map<AddressType, string> destinations;
+            for (const auto instruction : instructionsWithDestinations) {
+                if (isControlFlowIns(instruction.ins)) {
+                    auto it = destinations.find(instruction.destination);
+                    if (it == destinations.end() || instruction.ins.mnemonic == "call") {
+                        destinations[instruction.destination] = instruction.ins.mnemonic;
+                    }
+                }
+            }
+            return destinations;
+        }
+
+        string toHex(AddressType address) const {
+            std::ostringstream os;
+            os << std::hex << address;
+            return os.str();
+        }
+
+        void decodeTextSectionRecursively() {
+            auto sections = getSections();
+            auto header = getHeader();
+
+            RecursiveTextSectionDecoder recursiveDecoder(header, sections, getSection(sections, ".text"));
+            recursiveDecoder.decode();
+
+            auto instructionsWithDestination = generateInstructionsWithDestination(sections, recursiveDecoder.getInstructions());
+            auto orderedBlocks = createOrderedBasicBlocks(instructionsWithDestination);
+            auto destinations = getDestinations(instructionsWithDestination);
+            auto symbolsDict = createSymbolsDictionary(getFunctionSymbols());
+
+            string functionName = "NOT INITIALIZED";
+            int id = 1;
+            for (const auto block : orderedBlocks) {
+                const auto blockAddress = block[0].address;
+                const auto destinationCause = destinations[blockAddress];
+                if (destinationCause == "call" || blockAddress == header.e_entry) {
+                    auto symbol = symbolsDict.find(blockAddress);
+                    if (symbol != symbolsDict.end()) {
+                        functionName = symbol->second;
+                    } else {
+                        functionName = "sub_" + toHex(blockAddress);
+                    }
+                    cout << functionName << "_entry" << endl;
+                    id = 1;
+                } else {
+                    cout << functionName << "_" << id << endl;
+                    id++;
+                }
+
+                for (const auto instruction : block) {
+                    cout << instruction << endl;
+                }
+            }
         }
     };
 

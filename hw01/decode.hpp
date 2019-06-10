@@ -96,6 +96,7 @@ namespace InstructionDecoding
         AddressType address = -1;
         AddressType destination = -1;
         std::string comment;
+        bool valid = true;
 
         std::string toStrWithoutAddress() const {
             std::string result = ins.toStr();
@@ -131,7 +132,7 @@ namespace InstructionDecoding
 
     class Decoder {
     private:
-        vector<string> split(const string& str, char delim)  {
+        vector<string> split(const string& str, char delim) const {
             vector<string> tokens;
             std::stringstream mySstream(str);
             string token;
@@ -143,7 +144,7 @@ namespace InstructionDecoding
             return tokens;
         }
 
-        REX parseRex(uint8_t byte) {
+        REX parseRex(uint8_t byte) const {
             return { .W = static_cast<bool>(byte & 0x8),
                      .R = static_cast<bool>(byte & 0x4),
                      .X = static_cast<bool>(byte & 0x2),
@@ -151,19 +152,19 @@ namespace InstructionDecoding
         }
 
 
-        ModRM parseModRM(uint8_t byte) {
+        ModRM parseModRM(uint8_t byte) const {
             return { .mod = static_cast<uint8_t>((byte & 0xc0) >> 6),
                      .reg = static_cast<uint8_t>((byte & 0x38) >> 3),
                      .rm = static_cast<uint8_t>(byte & 0x07) };
         }
 
-        SIB parseSIB(uint8_t byte) {
+        SIB parseSIB(uint8_t byte) const {
             return { .scale = static_cast<uint8_t>((byte & 0xc0) >> 6),
                      .index = static_cast<uint8_t>((byte & 0x38) >> 3),
                      .base = static_cast<uint8_t>((byte & 0x07)) };
         }
 
-        int64_t parseImmediate(const uint8_t *startByte, int bytesCount) {
+        int64_t parseImmediate(const uint8_t *startByte, int bytesCount) const {
             uint64_t value = 0;
             for (int i = 0; i < bytesCount; i++, startByte++) {
                 value |= static_cast<uint64_t>(*startByte) << (i * 8);
@@ -171,35 +172,35 @@ namespace InstructionDecoding
             return static_cast<int64_t>(value);
         }
 
-        string int64ToHex(int64_t value, bool hexPrefix = true) {
+        string int64ToHex(int64_t value, bool hexPrefix = true) const {
             std::ostringstream os;
             addSymbols(os, value, hexPrefix);
             os << hex << std::abs(value);
             return os.str();
         }
 
-        string int32ToHex(int32_t value, bool hexPrefix = true) {
+        string int32ToHex(int32_t value, bool hexPrefix = true) const {
             std::ostringstream os;
             addSymbols(os, value, hexPrefix);
             os << hex << std::abs(value);
             return os.str();
         }
 
-        string int16ToHex(int16_t value, bool hexPrefix = true) {
+        string int16ToHex(int16_t value, bool hexPrefix = true) const {
             std::ostringstream os;
             addSymbols(os, value, hexPrefix);
             os << hex << std::abs(value);
             return os.str();
         }
 
-        string int8ToHex(int8_t value, bool hexPrefix = true) {
+        string int8ToHex(int8_t value, bool hexPrefix = true) const {
             std::ostringstream os;
             addSymbols(os, value, hexPrefix);
             os << hex << std::abs(value);
             return os.str();
         }
 
-        std::ostringstream& addSymbols(std::ostringstream& os, int64_t value, bool hexPrefix) {
+        std::ostringstream& addSymbols(std::ostringstream& os, int64_t value, bool hexPrefix) const {
             if (value < 0) {
                 os << "-";
             }
@@ -209,23 +210,23 @@ namespace InstructionDecoding
             return os;
         }
 
-        int8_t parseByteImmediate(const uint8_t *immediateStart) {
+        int8_t parseByteImmediate(const uint8_t *immediateStart) const {
             return static_cast<int8_t>(parseImmediate(immediateStart, 1));
         }
 
-        int16_t parse2ByteImmediate(const uint8_t *immediateStart) {
+        int16_t parse2ByteImmediate(const uint8_t *immediateStart) const {
             return static_cast<int16_t>(parseImmediate(immediateStart, 2));
         }
 
-        int32_t parse4ByteImmediate(const uint8_t *immediateStart) {
+        int32_t parse4ByteImmediate(const uint8_t *immediateStart) const {
             return static_cast<int32_t>(parseImmediate(immediateStart, 4));
         }
 
-        int64_t parse8ByteImmediate(const uint8_t *immediateStart) {
+        int64_t parse8ByteImmediate(const uint8_t *immediateStart) const {
             return static_cast<int64_t>(parseImmediate(immediateStart, 8));
         }
 
-        string getRegisterName(uint8_t value) {
+        string getRegisterName(uint8_t value) const {
             unordered_map<uint8_t, string> registers {
                     {0b000, "%rax"},
                     {0b011, "%rbx"},
@@ -239,17 +240,17 @@ namespace InstructionDecoding
             return registers[value];
         }
 
-        Operand getRegister(uint8_t value) {
+        Operand getRegister(uint8_t value) const {
             return { getRegisterName(value), 0, true };
         }
 
-        RegistersPair parseTwo64bitRegistersFromModRM(uint8_t byte) {
+        RegistersPair parseTwo64bitRegistersFromModRM(uint8_t byte) const {
             ModRM modRM = parseModRM(byte);
             return { { getRegisterName(modRM.reg), 0, true },
                      { getRegisterName(modRM.rm), 0, true } };
         }
 
-        vector<uint8_t> toBytes(const vector<const char*>& bytes) {
+        vector<uint8_t> toBytes(const vector<const char*>& bytes) const {
             std::string concatenatedBytes;
             for (int i = 0; i < bytes.size(); i++) {
                 if (i != 0) {
@@ -260,7 +261,7 @@ namespace InstructionDecoding
             return toBytes(concatenatedBytes);
         }
 
-        vector<uint8_t> toBytes(const string& concatenatedBytes) {
+        vector<uint8_t> toBytes(const string& concatenatedBytes) const {
             vector<uint8_t> bytes;
             for (const auto& byteStr : split(concatenatedBytes, ' ')) {
                 uint8_t byte = static_cast<uint8_t>(std::stoul(byteStr, 0, 16));
@@ -269,7 +270,7 @@ namespace InstructionDecoding
             return bytes;
         }
 
-        Instruction decodeBytes(const uint8_t* bytes) {
+        Instruction decodeBytes(const uint8_t* bytes) const {
             if (bytes == nullptr) {
                 return {};
             }
@@ -679,37 +680,41 @@ namespace InstructionDecoding
         }
 
         static AddressType CalculateDestinationAddress(const AddressType address, const int length, const int64_t offset) {
-            return address + length + offset;
+            return (int64_t)address + length + offset;
         }
 
         // Instruction variants
-        Instruction decodeInstruction(const vector<uint8_t>& bytes) {
+        Instruction decodeInstruction(const uint8_t* bytes) const {
+            return decodeBytes(bytes);
+        }
+
+        Instruction decodeInstruction(const vector<uint8_t>& bytes) const {
             return decodeBytes(&bytes[0]);
         }
 
-        Instruction decodeInstruction(const vector<const char*>& bytes) {
+        Instruction decodeInstruction(const vector<const char*>& bytes) const {
             return decodeInstruction(toBytes(bytes));
         }
 
-        Instruction decodeInstruction(const string& concatenatedBytes) {
+        Instruction decodeInstruction(const string& concatenatedBytes) const {
             return decodeInstruction(toBytes(concatenatedBytes));
         }
 
         // string variants
-        string decodeInstructionToStr(const vector<uint8_t>& bytes) {
+        string decodeInstructionToStr(const vector<uint8_t>& bytes) const {
             return decodeInstruction(bytes).toStr();
         }
 
-        string decodeInstructionToStr(const vector<const char*>& bytes) {
+        string decodeInstructionToStr(const vector<const char*>& bytes) const {
             return decodeInstruction(bytes).toStr();
         }
 
-        string decodeInstructionToStr(const string &concatenatedBytes) {
+        string decodeInstructionToStr(const string &concatenatedBytes) const {
             return decodeInstruction(concatenatedBytes).toStr();
         }
 
         // stream variants
-        vector<Instruction> decodeInstructions(const vector<uint8_t>& bytes) {
+        vector<Instruction> decodeInstructions(const vector<uint8_t>& bytes) const {
             vector<Instruction> instructions;
             const uint8_t *instructionPtr = &bytes[0];
             while (instructionPtr != &bytes[0] + bytes.size()) {
@@ -720,16 +725,16 @@ namespace InstructionDecoding
             return instructions;
         }
 
-        vector<Instruction> decodeInstructions(const vector<const char*>& bytes) {
+        vector<Instruction> decodeInstructions(const vector<const char*>& bytes) const {
             return decodeInstructions(toBytes(bytes));
         }
 
-        vector<Instruction> decodeInstructions(const string& concatenatedBytes) {
+        vector<Instruction> decodeInstructions(const string& concatenatedBytes) const {
             return decodeInstructions(toBytes(concatenatedBytes));
         }
 
         // with addresses
-        vector<AddressableInstruction> generateAddressableInstructions(const vector<Instruction>& instructions) {
+        vector<AddressableInstruction> generateAddressableInstructions(const vector<Instruction>& instructions) const {
             using AddressType = uint64_t;
             AddressType address = 0;
             vector<AddressableInstruction> addressableInstructions;

@@ -1,0 +1,55 @@
+
+test_binary:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000400078 <funA>:
+  400078:	55                   	push   %rbp
+  400079:	48 89 e5             	mov    %rsp,%rbp
+  40007c:	c7 05 02 00 00 00 7b 	movl   $0x7b,0x2(%rip)        # 400088 <funA+0x10>
+  400083:	00 00 00 
+  400086:	eb 06                	jmp    40008e <nop_label>
+  400088:	90                   	nop
+  400089:	e8 ea ff ff ff       	callq  400078 <funA>
+
+000000000040008e <nop_label>:
+  40008e:	90                   	nop
+  40008f:	8b 45 fc             	mov    -0x4(%rbp),%eax
+
+0000000000400092 <jb_label>:
+  400092:	72 02                	jb     400096 <je_label>
+  400094:	90                   	nop
+  400095:	90                   	nop
+
+0000000000400096 <je_label>:
+  400096:	74 fa                	je     400092 <jb_label>
+  400098:	75 05                	jne    40009f <pop_label>
+  40009a:	90                   	nop
+  40009b:	90                   	nop
+  40009c:	90                   	nop
+  40009d:	90                   	nop
+  40009e:	90                   	nop
+
+000000000040009f <pop_label>:
+  40009f:	5d                   	pop    %rbp
+  4000a0:	e8 01 00 00 00       	callq  4000a6 <some_function>
+  4000a5:	c3                   	retq   
+
+00000000004000a6 <some_function>:
+  4000a6:	55                   	push   %rbp
+  4000a7:	48 89 e5             	mov    %rsp,%rbp
+  4000aa:	5d                   	pop    %rbp
+  4000ab:	c3                   	retq   
+
+00000000004000ac <main>:
+  4000ac:	55                   	push   %rbp
+  4000ad:	48 89 e5             	mov    %rsp,%rbp
+  4000b0:	c7 05 ff ff ff ff 77 	movl   $0x777,-0x1(%rip)        # 4000b9 <main+0xd>
+  4000b7:	07 00 00 
+  4000ba:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
+  4000c1:	e8 b2 ff ff ff       	callq  400078 <funA>
+  4000c6:	89 45 f8             	mov    %eax,-0x8(%rbp)
+  4000c9:	89 c8                	mov    %ecx,%eax
+  4000cb:	5d                   	pop    %rbp
+  4000cc:	c3                   	retq   
