@@ -21,3 +21,6 @@ symtab:
 
 recfun:
 	$(CXX) $(CXXFLAGS) -o recfun hw05/main.cpp
+all: decode cfg elf decode.elf cfg.elf symtab recfun
+clean:
+	rm -f decode cfg elf decode.elf cfg.elf symtab recfun

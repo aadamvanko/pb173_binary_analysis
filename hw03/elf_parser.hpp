@@ -1,3 +1,6 @@
+#ifndef ELF_PARSER_HPP
+#define ELF_PARSER_HPP
+
 #include <elf.h>
 #include <stdio.h>
 #include <sys/mman.h>
@@ -548,3 +551,5 @@ namespace ELFParsing {
     };
 
 }
+
+#endif

@@ -1,5 +1,5 @@
-#ifndef DECODE_DECODE_HPP
-#define DECODE_DECODE_HPP
+#ifndef DECODE_HPP
+#define DECODE_HPP
 
 #include <string>
 #include <iostream>
@@ -756,4 +756,4 @@ namespace InstructionDecoding
 
 }
 
-#endif //DECODE_DECODE_H
+#endif //DECODE_H

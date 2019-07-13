@@ -1,3 +1,6 @@
+#ifndef CFG_HPP
+#define CFG_HPP
+
 #include "../hw01/decode.hpp"
 
 #include <unordered_map>
@@ -271,3 +274,5 @@ namespace
     };
 
 }
+
+#endif
