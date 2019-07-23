@@ -143,7 +143,7 @@ namespace
                     block.clear();
                     blocks.push_back({ instruction });
                 }
-                else if (destinationIndexes.find(instruction.address) != destinationIndexes.end()) {
+                else if (destinationIndexes.find(instruction.address) != destinationIndexes.end() && instruction.ins.mnemonic != "ret") {
                     blocks.push_back(block);
                     block.clear();
                     block.push_back(instruction);

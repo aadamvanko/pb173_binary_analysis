@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
     const string filename = argv[1];
     //const string filename = "../test-binaries/raw_bytes_text_section2.txt";
     //const string filename = "../test-binaries/test_binary";
+    //const string filename = "../test-binaries/hw3_counter_example";
     if (ELFParser::IsELFFile(filename)) {
         ELFParser elfParser(filename);
         const auto addressableInstructions = elfParser.decodeTextSection();
