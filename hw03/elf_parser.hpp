@@ -201,6 +201,15 @@ namespace ELFParsing {
             return "unkown section + ...";
         }
 
+        bool existsSection(const vector<Section>& sections, const string& sectionName) {
+            for (const auto& section : sections) {
+                if (section.name == sectionName) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         Section getSection(const vector<Section>& sections, const string& sectionName) {
             for (const auto& section : sections) {
                 if (section.name == sectionName) {
@@ -323,6 +332,11 @@ namespace ELFParsing {
 
         vector<Symbol> getFunctionSymbols() {
             auto sections = getSections();
+
+            if (!existsSection(sections, ".symtab")) {
+                return {};
+            }
+
             auto strtabSection = getSection(sections, ".strtab");
             auto symtabSection = getSection(sections, ".symtab");
 
