@@ -44,7 +44,7 @@ namespace
         }
 
         bool isControlFlowInstruction(const AddressableInstruction &instruction) const {
-            const std::set<string> mnemonics = { "jmp", "je", "jb", "jne", "call" };
+            const std::set<string> mnemonics = { "jmp", "je", "jb", "jne" };
             return mnemonics.find(instruction.ins.mnemonic) != mnemonics.end() && instruction.valid;
         }
 
@@ -247,6 +247,18 @@ namespace
                 const auto& basicBlock = basicBlocks[orderedBasicBlocksAddresses[i]];
                 const auto basicBlockAddress = orderedBasicBlocksAddresses[i];
 
+                // add call edges from inside block
+                if (!basicBlock.empty()) {
+                    for (size_t i = 0; i < basicBlock.size() - 1; i++) {
+                        const auto& instruction = basicBlock[i];
+                        if (instruction.ins.mnemonic == "call") {
+                            auto label = instruction.toStrWithoutAddress() + " # " + LABEL_PREFIX + toHex(instruction.destination);
+                            dotSource += createEdge(basicBlockAddress, instruction.destination, label);
+                        }
+                    }
+                }
+
+                // add edge for last instruction and fallthrough edge
                 const auto& lastInstruction = basicBlock.back();
                 if (isControlFlowInstruction(lastInstruction)) {
                     const auto& mnemonic = lastInstruction.ins.mnemonic;
