@@ -534,15 +534,41 @@ namespace ELFParsing {
             recursiveDecoder.decode();
 
             auto instructionsWithDestination = generateInstructionsWithDestination(sections, recursiveDecoder.getInstructions());
+            printLabeledBlocks(instructionsWithDestination);
+        }
+
+        void printLabeledBlocks(const vector<AddressableInstruction>& instructionsWithDestination) {
             auto orderedBlocks = createOrderedBasicBlocks(instructionsWithDestination);
             auto destinations = getDestinations(instructionsWithDestination);
             auto symbolsDict = createSymbolsDictionary(getFunctionSymbols());
+            auto blocksLabels = generateBlocksLabels(orderedBlocks, destinations, symbolsDict);
+
+            string functionName = "NOT INITIALIZED";
+            int id = 1;
+            for (const auto block : orderedBlocks) {
+                cout << blocksLabels[block[0].address] << endl;
+                for (const auto instruction : block) {
+                    cout << instruction;
+                    if (instruction.ins.mnemonic == "call") {
+                        cout << " # " << blocksLabels[instruction.destination];
+                    }
+                    cout << endl;
+                }
+            }
+        }
+
+        map<AddressType, string> generateBlocksLabels(const vector<BasicBlockAddressable>& orderedBlocks,
+                                                      map<AddressType, string>& destinations,
+                                                      const map<AddressType, string>& symbolsDict) {
+            auto header = getHeader();
+            map<AddressType, string> blocksLabels;
 
             string functionName = "NOT INITIALIZED";
             int id = 1;
             for (const auto block : orderedBlocks) {
                 const auto blockAddress = block[0].address;
                 const auto destinationCause = destinations[blockAddress];
+                string blockLabel;
                 if (destinationCause == "call" || blockAddress == header.e_entry) {
                     auto symbol = symbolsDict.find(blockAddress);
                     if (symbol != symbolsDict.end()) {
@@ -550,17 +576,15 @@ namespace ELFParsing {
                     } else {
                         functionName = "sub_" + toHex(blockAddress);
                     }
-                    cout << functionName << "_entry" << endl;
+                    blockLabel = functionName + "_entry";
                     id = 1;
                 } else {
-                    cout << functionName << "_" << id << endl;
+                    blockLabel = functionName + "_" + to_string(id);
                     id++;
                 }
-
-                for (const auto instruction : block) {
-                    cout << instruction << endl;
-                }
+                blocksLabels[blockAddress] = blockLabel;
             }
+            return blocksLabels;
         }
     };
 
