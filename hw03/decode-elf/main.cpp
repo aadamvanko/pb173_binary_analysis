@@ -27,12 +27,10 @@ int main(int argc, char* argv[]) {
     }
 
     string filename = argv[1];
+    vector<AddressableInstruction> addressableInstructions;
     if (ELFParser::IsELFFile(filename)) {
         ELFParser elfParser(filename);
-        const auto addressableInstructions = elfParser.decodeTextSection();
-        for (const auto& instruction : addressableInstructions) {
-            cout << instruction << endl;
-        }
+        addressableInstructions = elfParser.decodeTextSection();
     } else {
         uint8_t byte;
         std::vector<uint8_t> bytes;
@@ -48,10 +46,15 @@ int main(int argc, char* argv[]) {
         }
         Decoder decoder;
         const auto instructions = decoder.decodeInstructions(bytes);
-        const auto addressableInstructions = decoder.generateAddressableInstructions(instructions);
-        for (const auto& instruction : addressableInstructions) {
-            cout << instruction << endl;
+        addressableInstructions = decoder.generateAddressableInstructions(instructions);
+    }
+
+    for (const auto& instruction : addressableInstructions) {
+        cout << instruction;
+        if (instruction.ins.mnemonic == "call") {
+            cout << " # " << instruction.destination;
         }
+        cout << endl;
     }
 
     return 0;
